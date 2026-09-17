@@ -1,6 +1,7 @@
 # Android Device App
 
 A native macOS app for creating and running Android emulators, without Android Studio or Java.
+Its design is inspired by Apple's Device Hub in macOS 27.
 
 > [!WARNING]
 > **This is a beta.** I built it for my own use and I'm sharing it as is. Many features are missing,
@@ -64,4 +65,5 @@ See [CONTRIBUTING.md](CONTRIBUTING.md) for the project layout, tests and scripts
 [Mozilla Public License 2.0](LICENSE). Third-party licenses are listed in
 [ThirdPartyNotices.md](App/Resources/ThirdPartyNotices.md).
 
-Android is a trademark of Google LLC. This project isn't affiliated with or endorsed by Google.
+Android is a trademark of Google LLC. Apple and macOS are trademarks of Apple Inc.
+This project isn't affiliated with or endorsed by Google or Apple.
