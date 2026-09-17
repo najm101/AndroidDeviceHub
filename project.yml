@@ -1,0 +1,102 @@
+# Generates AndroidDeviceHub.xcodeproj: `xcodegen generate` (or Scripts/bootstrap.sh).
+# All code lives in Packages/ADHKit; the app target only composes it.
+name: AndroidDeviceHub
+options:
+  bundleIdPrefix: io.github.najm101
+  deploymentTarget:
+    macOS: "26.0"
+  createIntermediateGroups: true
+  developmentLanguage: en
+settings:
+  base:
+    SWIFT_VERSION: "6.0"
+    SWIFT_STRICT_CONCURRENCY: complete
+    ENABLE_USER_SCRIPT_SANDBOXING: YES
+    DEAD_CODE_STRIPPING: YES
+  configs:
+    Release:
+      SWIFT_TREAT_WARNINGS_AS_ERRORS: YES
+packages:
+  ADHKit:
+    path: Packages/ADHKit
+targets:
+  AndroidDeviceHub:
+    type: application
+    platform: macOS
+    sources:
+      - path: App/Sources
+      - path: App/Resources
+        excludes:
+          - Info.plist
+          - "*.entitlements"
+    dependencies:
+      - package: ADHKit
+        product: ADHKit
+    settings:
+      base:
+        PRODUCT_NAME: Android Device App
+        PRODUCT_BUNDLE_IDENTIFIER: io.github.najm101.AndroidDeviceApp
+        INFOPLIST_FILE: App/Resources/Info.plist
+        CODE_SIGN_ENTITLEMENTS: App/Resources/AndroidDeviceHub.entitlements
+        ENABLE_HARDENED_RUNTIME: YES
+        # A stable signature keeps macOS privacy grants (e.g. removable volumes) across rebuilds;
+        # ad-hoc signatures change every build.
+        CODE_SIGN_STYLE: Manual
+        CODE_SIGN_IDENTITY: Apple Development
+        DEVELOPMENT_TEAM: MG5SH9F8YS
+        ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
+        ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME: AccentColor
+        MARKETING_VERSION: "0.1.0"
+        CURRENT_PROJECT_VERSION: "1"
+        COMBINE_HIDPI_IMAGES: YES
+        SWIFT_EMIT_LOC_STRINGS: YES
+        LOCALIZATION_PREFERS_STRING_CATALOGS: YES
+  AndroidDeviceHubUITests:
+    type: bundle.ui-testing
+    platform: macOS
+    sources:
+      - path: UITests
+    dependencies:
+      - target: AndroidDeviceHub
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: io.github.najm101.AndroidDeviceAppUITests
+        TEST_TARGET_NAME: AndroidDeviceHub
+        # A stable signature keeps macOS privacy grants (e.g. removable volumes) across rebuilds;
+        # ad-hoc signatures change every build.
+        CODE_SIGN_STYLE: Manual
+        CODE_SIGN_IDENTITY: Apple Development
+        DEVELOPMENT_TEAM: MG5SH9F8YS
+        GENERATE_INFOPLIST_FILE: YES
+schemes:
+  AndroidDeviceHub:
+    build:
+      targets:
+        AndroidDeviceHub: all
+    run:
+      config: Debug
+    test:
+      config: Debug
+      captureScreenshotsAutomatically: false
+      targets:
+        - name: AndroidDeviceHubUITests
+          parallelizable: false
+        - package: ADHKit/FoundationsTests
+        - package: ADHKit/SDKDomainTests
+        - package: ADHKit/SDKLocatorTests
+        - package: ADHKit/SDKCatalogTests
+        - package: ADHKit/SDKInstallerTests
+        - package: ADHKit/AVDStoreTests
+        - package: ADHKit/HardwareProfilesTests
+        - package: ADHKit/SetupChecksTests
+        - package: ADHKit/EmulatorRuntimeTests
+        - package: ADHKit/DeviceControllersTests
+        - package: ADHKit/DeviceListFeatureTests
+        - package: ADHKit/AddEmulatorFeatureTests
+        - package: ADHKit/OnboardingFeatureTests
+        - package: ADHKit/DeviceSettingsFeatureTests
+        - package: ADHKit/InspectorFeaturesTests
+        - package: ADHKit/ADBClientTests
+        - package: ADHKit/APKMetadataTests
+    archive:
+      config: Release

@@ -1,0 +1,51 @@
+{
+  "sourceLanguage" : "en",
+  "strings" : {
+    "Android Device App" : {
+
+    },
+    "Checking your Android SDK…" : {
+
+    },
+    "Components" : {
+
+    },
+    "General" : {
+
+    },
+    "Hide Inspector" : {
+
+    },
+    "Hide the inspector (⌥⌘I)" : {
+
+    },
+    "Inspector" : {
+
+    },
+    "Logcat" : {
+
+    },
+    "New Emulator…" : {
+
+    },
+    "No Device Selected" : {
+
+    },
+    "Reload Devices" : {
+
+    },
+    "Select a device in the sidebar, or create a new emulator." : {
+
+    },
+    "Show Inspector" : {
+
+    },
+    "Show the inspector (⌥⌘I)" : {
+
+    },
+    "Third-Party Notices" : {
+
+    }
+  },
+  "version" : "1.0"
+}

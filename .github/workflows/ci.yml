@@ -1,0 +1,30 @@
+name: CI
+
+# Checks pull requests. Pushes to main go through release.yml, which runs the same checks first.
+on:
+  pull_request:
+  workflow_dispatch:
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build-and-test:
+    runs-on: macos-26
+    steps:
+      - uses: actions/checkout@v4
+      - name: Tools
+        run: |
+          xcodebuild -version
+          brew install xcodegen swiftlint
+      - name: Lint
+        run: Scripts/lint.sh
+      - name: Unit tests
+        run: cd Packages/ADHKit && swift test
+      - name: Build app
+        run: |
+          xcodegen generate
+          xcodebuild -project AndroidDeviceHub.xcodeproj -scheme AndroidDeviceHub \
+            -destination 'platform=macOS' -derivedDataPath build/DerivedData \
+            CODE_SIGN_IDENTITY=- CODE_SIGN_STYLE=Manual DEVELOPMENT_TEAM= build -quiet

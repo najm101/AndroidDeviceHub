@@ -1,0 +1,2 @@
+<revision><major>36</major><minor>5</minor><micro>11</micro></revision>
+Copied from Android Emulator 36.5.11 (sdk/emulator/lib). Regenerate Swift code with Scripts/generate-protos.sh.

@@ -1,0 +1,158 @@
+name: Release
+
+# Every push to main builds a signed, notarized app and publishes it as a GitHub pre-release.
+#
+# Versioning (nothing is committed back to main):
+#   - MAJOR.MINOR comes from MARKETING_VERSION in project.yml. Edit it there to start a new series.
+#   - PATCH is one more than the newest vMAJOR.MINOR.* tag, or project.yml's patch for the first release.
+#   - The build number is the commit count of main, so it only goes up.
+# Both are passed to xcodebuild, and Info.plist reads them from the build settings.
+#
+# Required secrets:
+#   DEVELOPER_ID_P12           base64 of the "Developer ID Application" certificate exported as .p12
+#   DEVELOPER_ID_P12_PASSWORD  the .p12 password
+#   NOTARY_KEY_P8              contents of the App Store Connect API key (.p8)
+#   NOTARY_KEY_ID              the API key ID
+#   NOTARY_ISSUER_ID           the API key issuer ID
+#   TEAM_ID                    the Apple Developer team ID
+on:
+  push:
+    branches: [main]
+    paths-ignore:
+      - "*.md"
+      - "docs/**"
+      - "LICENSE"
+  workflow_dispatch:
+
+concurrency:
+  group: release
+  cancel-in-progress: false
+
+permissions:
+  contents: write
+
+env:
+  APP_NAME: Android Device App
+  ASSET_PREFIX: Android-Device-App
+
+jobs:
+  release:
+    runs-on: macos-26
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Tools
+        run: |
+          xcodebuild -version
+          brew install xcodegen swiftlint
+
+      - name: Lint
+        run: Scripts/lint.sh
+
+      - name: Unit tests
+        run: cd Packages/ADHKit && swift test
+
+      - name: Work out the version
+        id: version
+        run: |
+          base=$(sed -n 's/^ *MARKETING_VERSION: *"\(.*\)"/\1/p' project.yml)
+          major_minor=${base%.*}
+          latest=$(git tag --list "v$major_minor.*" --sort=-v:refname | head -n 1)
+          if [[ -n "$latest" ]]; then
+            version="$major_minor.$(( ${latest##*.} + 1 ))"
+          else
+            version="$base"
+          fi
+          build=$(git rev-list --count HEAD)
+          echo "version=$version" >> "$GITHUB_OUTPUT"
+          echo "build=$build" >> "$GITHUB_OUTPUT"
+          echo "Releasing $version ($build)"
+
+      - name: Import the signing certificate
+        env:
+          P12: ${{ secrets.DEVELOPER_ID_P12 }}
+          P12_PASSWORD: ${{ secrets.DEVELOPER_ID_P12_PASSWORD }}
+        run: |
+          if [[ -z "$P12" ]]; then
+            echo "::error::The DEVELOPER_ID_P12 secret isn't set. See the comment at the top of release.yml."
+            exit 1
+          fi
+          keychain="$RUNNER_TEMP/signing.keychain-db"
+          keychain_password=$(uuidgen)
+          echo "$P12" | base64 --decode > "$RUNNER_TEMP/cert.p12"
+          security create-keychain -p "$keychain_password" "$keychain"
+          security set-keychain-settings -lut 21600 "$keychain"
+          security unlock-keychain -p "$keychain_password" "$keychain"
+          security import "$RUNNER_TEMP/cert.p12" -k "$keychain" -P "$P12_PASSWORD" -T /usr/bin/codesign
+          security set-key-partition-list -S apple-tool:,apple: -k "$keychain_password" "$keychain" >/dev/null
+          security list-keychains -d user -s "$keychain" $(security list-keychains -d user | tr -d '"')
+          rm "$RUNNER_TEMP/cert.p12"
+
+      - name: Archive and export
+        env:
+          TEAM_ID: ${{ secrets.TEAM_ID }}
+          VERSION: ${{ steps.version.outputs.version }}
+          BUILD: ${{ steps.version.outputs.build }}
+        run: |
+          out="$RUNNER_TEMP/release"
+          mkdir -p "$out"
+          xcodegen generate --quiet
+          xcodebuild archive -project AndroidDeviceHub.xcodeproj -scheme AndroidDeviceHub \
+            -configuration Release -destination 'generic/platform=macOS' \
+            -archivePath "$out/App.xcarchive" \
+            CODE_SIGN_STYLE=Manual "CODE_SIGN_IDENTITY=Developer ID Application" "DEVELOPMENT_TEAM=$TEAM_ID" \
+            "MARKETING_VERSION=$VERSION" "CURRENT_PROJECT_VERSION=$BUILD" -quiet
+          cat > "$out/ExportOptions.plist" <<PLIST
+          <?xml version="1.0" encoding="UTF-8"?>
+          <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+          <plist version="1.0">
+          <dict>
+            <key>method</key><string>developer-id</string>
+            <key>signingStyle</key><string>manual</string>
+            <key>teamID</key><string>$TEAM_ID</string>
+          </dict>
+          </plist>
+          PLIST
+          xcodebuild -exportArchive -archivePath "$out/App.xcarchive" \
+            -exportOptionsPlist "$out/ExportOptions.plist" -exportPath "$out/export" -quiet
+          app="$out/export/$APP_NAME.app"
+          codesign --verify --deep --strict "$app"
+          plist="$app/Contents/Info.plist"
+          echo "Built $(/usr/libexec/PlistBuddy -c 'Print CFBundleShortVersionString' "$plist")" \
+            "($(/usr/libexec/PlistBuddy -c 'Print CFBundleVersion' "$plist"))"
+
+      - name: Notarize
+        env:
+          KEY_P8: ${{ secrets.NOTARY_KEY_P8 }}
+          KEY_ID: ${{ secrets.NOTARY_KEY_ID }}
+          ISSUER_ID: ${{ secrets.NOTARY_ISSUER_ID }}
+        run: |
+          out="$RUNNER_TEMP/release"
+          app="$out/export/$APP_NAME.app"
+          echo "$KEY_P8" > "$RUNNER_TEMP/notary.p8"
+          ditto -c -k --keepParent "$app" "$out/notarize.zip"
+          xcrun notarytool submit "$out/notarize.zip" \
+            --key "$RUNNER_TEMP/notary.p8" --key-id "$KEY_ID" --issuer "$ISSUER_ID" --wait
+          xcrun stapler staple "$app"
+          spctl --assess --type execute --verbose "$app"
+          rm "$RUNNER_TEMP/notary.p8"
+
+      - name: Publish the release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          VERSION: ${{ steps.version.outputs.version }}
+          BUILD: ${{ steps.version.outputs.build }}
+        run: |
+          out="$RUNNER_TEMP/release"
+          zip="$out/$ASSET_PREFIX-$VERSION.zip"
+          ditto -c -k --keepParent "$out/export/$APP_NAME.app" "$zip"
+          (cd "$out" && shasum -a 256 "$(basename "$zip")" > "$(basename "$zip").sha256")
+          gh release create "v$VERSION" "$zip" "$zip.sha256" \
+            --target "$GITHUB_SHA" --prerelease \
+            --title "$APP_NAME $VERSION (beta, build $BUILD)" --generate-notes
+
+      - name: Remove the signing keychain
+        if: always()
+        run: security delete-keychain "$RUNNER_TEMP/signing.keychain-db" 2>/dev/null || true

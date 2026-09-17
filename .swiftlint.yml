@@ -1,0 +1,38 @@
+included:
+  - App
+  - Packages/ADHKit/Sources
+  - Packages/ADHKit/Tests
+  - UITests
+excluded:
+  - Packages/ADHKit/.build
+  - build
+  - Packages/ADHKit/Sources/EmulatorGRPC/Generated
+line_length:
+  warning: 120
+  error: 160
+  ignores_urls: true
+  ignores_comments: true
+identifier_name:
+  excluded: [id, x, y, ok, to]
+type_body_length: 400
+file_length: 600
+function_body_length: 80
+nesting:
+  type_level: 2
+disabled_rules:
+  - todo
+  - trailing_comma
+  - opening_brace
+opt_in_rules:
+  - force_unwrapping
+  - implicitly_unwrapped_optional
+  - empty_count
+  - first_where
+  - sorted_imports
+  - unused_import
+custom_rules:
+  no_device_kind_checks_in_views:
+    name: "Views check capabilities, not device kinds"
+    regex: '\.kind\s*==\s*\.(emulator|physical)'
+    included: ".*/Sources/.*Feature/.*\\.swift"
+    severity: error
