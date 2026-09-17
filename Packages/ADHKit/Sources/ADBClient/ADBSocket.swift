@@ -34,8 +34,9 @@ final class ADBSocket: @unchecked Sendable {
                     default: result = nil
                     }
                     guard let result,
-                        !resumed.withLock({
-                            defer { $0 = true }; return $0
+                        !resumed.withLock({ alreadyResumed in
+                            defer { alreadyResumed = true }
+                            return alreadyResumed
                         })
                     else { return }
                     continuation.resume(with: result)
