@@ -7,11 +7,14 @@ struct DeviceCanvas<Content: View>: View {
     let aspectSize: PixelSize?
     let style: DeviceFrameStyle
     let zoom: DeviceWorkspaceModel.Zoom
+    var cornerScale: CGFloat = 1
     @ViewBuilder let content: Content
 
     var body: some View {
         let size = aspectSize ?? PixelSize(width: 1080, height: 2400)
-        let silhouette = DeviceSilhouette(aspectRatio: CGFloat(size.aspectRatio), style: style) {
+        let silhouette = DeviceSilhouette(
+            aspectRatio: CGFloat(size.aspectRatio), style: style, cornerScale: cornerScale
+        ) {
             content
         }
         switch zoom {

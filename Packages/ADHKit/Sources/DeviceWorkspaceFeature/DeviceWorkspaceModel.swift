@@ -108,6 +108,11 @@ public final class DeviceWorkspaceModel {
         displayMetrics?.contentArea ?? CGRect(x: 0, y: 0, width: 1, height: 1)
     }
 
+    /// Scales the frame's screen corners so they don't cut into an override's content.
+    var screenCornerScale: CGFloat {
+        CGFloat(displayMetrics?.cornerScale(panelCorner: Double(frameStyle.screenCornerFraction)) ?? 1)
+    }
+
     /// Reads the device's screen override once ADB can reach it.
     func loadDisplayMetrics() async {
         guard device?.availability(of: .displaySize).isAvailable == true,

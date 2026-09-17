@@ -5,12 +5,22 @@ public import SwiftUI
 public struct DeviceSilhouette<Content: View>: View {
     private let aspectRatio: CGFloat
     private let style: DeviceFrameStyle
+    private let cornerScale: CGFloat
     private let content: Content
 
-    /// - Parameter aspectRatio: screen width divided by height.
-    public init(aspectRatio: CGFloat, style: DeviceFrameStyle = .phone, @ViewBuilder content: () -> Content) {
+    /// - Parameters:
+    ///   - aspectRatio: screen width divided by height.
+    ///   - cornerScale: multiplies the style's screen corner radius, so the rounding can stay clear of
+    ///     content that a real device wouldn't clip.
+    public init(
+        aspectRatio: CGFloat,
+        style: DeviceFrameStyle = .phone,
+        cornerScale: CGFloat = 1,
+        @ViewBuilder content: () -> Content
+    ) {
         self.aspectRatio = style.isRound ? 1 : max(0.2, min(aspectRatio, 5))
         self.style = style
+        self.cornerScale = cornerScale
         self.content = content()
     }
 
@@ -20,7 +30,9 @@ public struct DeviceSilhouette<Content: View>: View {
 
     public var body: some View {
         GeometryReader { proxy in
-            let layout = FrameLayout(style: style, aspectRatio: aspectRatio, available: proxy.size)
+            let layout = FrameLayout(
+                style: style, aspectRatio: aspectRatio, available: proxy.size, cornerScale: cornerScale
+            )
             ZStack(alignment: .topLeading) {
                 FrameArtwork(style: style, layout: layout)
                 content

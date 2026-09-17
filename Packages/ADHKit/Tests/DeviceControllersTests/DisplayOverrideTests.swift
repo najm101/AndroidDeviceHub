@@ -59,6 +59,21 @@ struct DisplayOverrideTests {
         #expect(denser.apparentSize == PixelSize(width: 540, height: 1200))
     }
 
+    @Test func cornersOnlyRoundWhereThePanelWouldClip() {
+        #expect(phone.cornerScale(panelCorner: 0.09) == 1)
+
+        var tablet = phone
+        tablet.overrideSize = PixelSize(width: 1080, height: 1728)
+        // 336 px bars are thicker than the 97 px rounding.
+        #expect(tablet.cornerScale(panelCorner: 0.09) == 0)
+
+        var slightlyShorter = phone
+        slightlyShorter.overrideSize = PixelSize(width: 1080, height: 2340)
+        // 30 px bars leave 67 of the 97 px rounding.
+        let scale = slightlyShorter.cornerScale(panelCorner: 0.09)
+        #expect(abs(scale * 0.09 * 1080 - 67.2) < 0.1)
+    }
+
     @Test func rejectsValuesAndroidWouldRefuse() {
         #expect(DisplayConfiguration(size: PixelSize(width: 100, height: 2400), density: 420).validationError != nil)
         #expect(DisplayConfiguration(size: PixelSize(width: 1080, height: 2400), density: 20).validationError != nil)

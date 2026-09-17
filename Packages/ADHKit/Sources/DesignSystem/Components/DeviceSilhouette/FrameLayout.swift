@@ -10,7 +10,7 @@ struct FrameLayout {
     let screenCorner: CGFloat
     let isLandscape: Bool
 
-    init(style: DeviceFrameStyle, aspectRatio: CGFloat, available: CGSize) {
+    init(style: DeviceFrameStyle, aspectRatio: CGFloat, available: CGSize, cornerScale: CGFloat = 1) {
         let metrics = style.metrics
         // Scale a unit-height screen so the whole footprint fits.
         let unitShort = min(aspectRatio, 1)
@@ -26,7 +26,7 @@ struct FrameLayout {
         body = CGRect(
             x: side, y: 0, width: screenSize.width + bezel * 2, height: screenSize.height + bezel * 2)
         screen = CGRect(x: side + bezel, y: bezel, width: screenSize.width, height: screenSize.height)
-        screenCorner = style.isRound ? short / 2 : short * metrics.screenCorner
+        screenCorner = style.isRound ? short / 2 : short * metrics.screenCorner * max(0, min(cornerScale, 2))
         bodyCorner = style.isRound ? body.height / 2 : screenCorner + bezel
         isLandscape = aspectRatio > 1
     }

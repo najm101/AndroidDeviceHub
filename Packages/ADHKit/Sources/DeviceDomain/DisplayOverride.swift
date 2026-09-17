@@ -57,6 +57,21 @@ public struct DisplayMetrics: Hashable, Sendable {
         )
     }
 
+    /// How much of the panel's corner rounding still reaches the content, compared with rounding the
+    /// content by `panelCorner` of its own short side: 1 without an override, 0 when the black bars
+    /// around an override are thicker than the rounding.
+    public func cornerScale(panelCorner: Double) -> Double {
+        guard overrideSize != nil, panelCorner > 0 else { return 1 }
+        let area = contentArea
+        let panelWidth = Double(physicalSize.width)
+        let panelHeight = Double(physicalSize.height)
+        let radius = panelCorner * min(panelWidth, panelHeight)
+        let bar = max(area.minX * panelWidth, area.minY * panelHeight)
+        let contentShort = min(area.width * panelWidth, area.height * panelHeight)
+        guard contentShort > 0 else { return 0 }
+        return max(0, radius - bar) / contentShort / panelCorner
+    }
+
     /// The density that makes `size` show things at their real-world size on this screen.
     ///
     /// Android scales an override size to fit the panel, so each override pixel covers `1 / scale`

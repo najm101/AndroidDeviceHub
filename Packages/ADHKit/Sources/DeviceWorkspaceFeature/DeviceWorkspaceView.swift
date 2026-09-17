@@ -53,7 +53,8 @@ public struct DeviceWorkspaceView: View {
             DeviceCanvas(
                 aspectSize: model.orientedScreenSize,
                 style: model.frameStyle,
-                zoom: model.isCompact ? .fit : model.zoom
+                zoom: model.isCompact ? .fit : model.zoom,
+                cornerScale: model.screenCornerScale
             ) {
                 if case .running(inAppControl: true) = device.state, let session = model.session {
                     DeviceScreenView(

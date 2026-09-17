@@ -35,6 +35,9 @@ public enum DeviceFrameStyle: Hashable, Sendable {
 
     var isRound: Bool { self == .roundWatch }
 
+    /// How round the screen's corners are, as a fraction of its shorter side.
+    public var screenCornerFraction: CGFloat { metrics.screenCorner }
+
     /// The whole frame's size for a screen of `screen` points.
     public func footprint(forScreen screen: CGSize) -> CGSize {
         let short = min(screen.width, screen.height)
