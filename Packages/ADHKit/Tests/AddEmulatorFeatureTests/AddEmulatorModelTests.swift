@@ -80,6 +80,25 @@ struct AddEmulatorModelTests {
         #expect(model.selectedImage?.details.tagFolder == "google_apis")
     }
 
+    @Test func reportsInstalledAndOfferedServicesPerAPILevel() async throws {
+        let model = makeModel(images: Self.catalog)
+        await model.loadImages()
+        let api36 = try #require(model.apiChoices.first { $0.level.major == 36 })
+        let api35 = try #require(model.apiChoices.first { $0.level.major == 35 })
+
+        let latest = model.availability(of: api36)
+        #expect(latest.isInstalled)
+        #expect(latest.services == [.googlePlay, .googleAPIs])
+        #expect(latest.installedServices == [.googlePlay])
+        #expect(!model.availability(of: api35).isInstalled)
+
+        model.services = .googleAPIs
+        #expect(!model.availability(of: api36).isInstalled)
+
+        model.showSixteenKBImages = true
+        #expect(model.availability(of: api36).services == [.googlePlay])
+    }
+
     @Test func hidesPlayStoreForProfilesWithoutIt() {
         let model = makeModel(images: Self.catalog)
         model.selectedProfileID = "small_phone"

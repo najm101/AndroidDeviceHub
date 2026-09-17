@@ -16,7 +16,14 @@ struct DeviceTab: View {
                 }
                 if model.selectedProfile?.formFactor.usesMobileImages != false {
                     Picker("Services", selection: $model.services) {
-                        ForEach(model.availableServices) { Text($0.title).tag($0) }
+                        ForEach(model.availableServices) { services in
+                            Label {
+                                Text(services.title)
+                            } icon: {
+                                ImageServicesGlyph(services: services)
+                            }
+                            .tag(services)
+                        }
                     }
                 }
                 Picker("API level", selection: $model.selectedAPI) {
@@ -24,10 +31,24 @@ struct DeviceTab: View {
                         Text("None available").tag(AddEmulatorModel.APIChoice?.none)
                     }
                     ForEach(model.apiChoices) { choice in
-                        Text(choice.title).tag(Optional(choice))
+                        apiLabel(choice).tag(Optional(choice))
                     }
                 }
                 .disabled(model.apiChoices.isEmpty)
+                if let choice = model.selectedAPI, !model.availability(of: choice).services.isEmpty {
+                    LabeledContent("Images") {
+                        HStack(spacing: Spacing.xSmall) {
+                            ForEach(model.availability(of: choice).services) { services in
+                                ImageServicesBadge(
+                                    services: services,
+                                    isInstalled: model.availability(of: choice).installedServices.contains(services),
+                                    isSelected: services == model.services,
+                                    select: { model.services = services }
+                                )
+                            }
+                        }
+                    }
+                }
             }
 
             Section {
@@ -49,6 +70,25 @@ struct DeviceTab: View {
             }
         }
         .formStyle(.grouped)
+    }
+
+    /// A menu item. Menus drop subtitles and tints, so the flavors are drawn into one icon.
+    private func apiLabel(_ choice: AddEmulatorModel.APIChoice) -> some View {
+        let availability = model.availability(of: choice)
+        return Label {
+            Text(choice.title)
+        } icon: {
+            if availability.services.isEmpty {
+                Image(systemName: availability.isInstalled ? Symbol.success : Symbol.download)
+            } else {
+                APIAvailabilityIcon(
+                    services: model.availableServices,
+                    offered: Set(availability.services),
+                    installed: availability.installedServices
+                )
+                .image
+            }
+        }
     }
 
     @ViewBuilder private var imageList: some View {

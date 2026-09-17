@@ -7,6 +7,10 @@ Android Device App uses the following open source software.
 `Packages/ADHKit/Protos/emulator` (from the Android SDK emulator package), Copyright The Android Open Source Project, licensed under the Apache License 2.0.
 The generated device frames are drawn by the app; no Android Studio artwork is included.
 
+## Android robot
+
+The open source image icon is based on the Android robot, reproduced or modified from work created and shared by Google and used according to terms described in the Creative Commons 3.0 Attribution License.
+
 ## grpc-swift-2 2.4.3
 
 https://github.com/grpc/grpc-swift-2.git

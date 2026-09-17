@@ -13,6 +13,15 @@ extension AddEmulatorModel {
         }
     }
 
+    /// What exists for one API level, for the API picker's badges.
+    struct APIAvailability: Equatable {
+        /// An image with the chosen services is installed (or, for Wear/TV, any image is).
+        var isInstalled = false
+        /// Service variants offered for this level, in picker order. Empty for Wear/TV profiles.
+        var services: [ImageServices] = []
+        var installedServices: Set<ImageServices> = []
+    }
+
     var availableServices: [ImageServices] {
         guard let profile = selectedProfile else { return ImageServices.allCases }
         return ImageServices.allCases.filter { $0 != .googlePlay || profile.playStore }
@@ -40,6 +49,29 @@ extension AddEmulatorModel {
                 if lhs.level != rhs.level { return lhs.level > rhs.level }
                 return lhs.stageLabel == nil && rhs.stageLabel != nil
             }
+    }
+
+    func availability(of choice: APIChoice) -> APIAvailability {
+        guard let profile = selectedProfile else { return APIAvailability() }
+        // Same filters as `compatibleImages`, except services, so every variant shows up.
+        let forLevel = images.filter { entry in
+            let details = entry.details
+            return profile.supports(details)
+                && details.apiLevel == choice.level
+                && details.stage.label == choice.stageLabel
+                && details.usesSixteenKBPages == showSixteenKBImages
+                && (showPreviewImages || !details.stage.isPrerelease)
+        }
+        guard profile.formFactor.usesMobileImages else {
+            return APIAvailability(isInstalled: forLevel.contains(where: \.isInstalled))
+        }
+        let offered = Set(forLevel.map(\.details.services))
+        let installed = Set(forLevel.filter(\.isInstalled).map(\.details.services))
+        return APIAvailability(
+            isInstalled: installed.contains(services),
+            services: availableServices.filter(offered.contains),
+            installedServices: installed
+        )
     }
 
     var imagesForSelectedAPI: [SystemImageEntry] {

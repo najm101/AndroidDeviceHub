@@ -30,6 +30,11 @@ out = [
     "Copyright The Android Open Source Project, licensed under the Apache License 2.0.",
     "The generated device frames are drawn by the app; no Android Studio artwork is included.",
     "",
+    "## Android robot",
+    "",
+    "The open source image icon is based on the Android robot, reproduced or modified from work created and "
+    "shared by Google and used according to terms described in the Creative Commons 3.0 Attribution License.",
+    "",
 ]
 for pin in sorted(pins, key=lambda p: p["identity"]):
     folder = next((c for c in checkouts.iterdir() if c.name.lower() == pin["identity"].lower()), None)
