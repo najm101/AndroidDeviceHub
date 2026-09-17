@@ -14,7 +14,7 @@ public struct CompactWindowLayout: Equatable, Sendable {
     /// Height of the compact footer.
     public static let footerHeight: CGFloat = 52
     /// The footer's controls need this much width.
-    public static let minimumWidth: CGFloat = 260
+    public static let minimumWidth: CGFloat = 272
     /// Below this width the title is hidden, so the toolbar buttons don't move into the overflow menu.
     public static let titleMinimumWidth: CGFloat = 400
     /// The device is never drawn shorter than this.

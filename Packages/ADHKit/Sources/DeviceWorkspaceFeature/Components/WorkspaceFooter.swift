@@ -7,33 +7,27 @@ struct WorkspaceFooter: View {
     let model: DeviceWorkspaceModel
 
     var body: some View {
-        HStack(spacing: model.isCompact ? Spacing.small : Spacing.medium) {
-            ControlGroup {
+        HStack(spacing: Spacing.small) {
+            GlassButtonGroup {
                 button("Rotate", Symbol.rotateLeft, .rotate, help: "Rotate left", action: model.rotate)
             }
-            .fixedSize()
             .frame(maxWidth: .infinity, alignment: .leading)
 
-            ControlGroup {
+            GlassButtonGroup {
                 button("Back", Symbol.back, .navigationKeys) { model.press(.back) }
                 button("Home", Symbol.home, .navigationKeys) { model.press(.home) }
                 button("Recents", Symbol.recents, .navigationKeys) { model.press(.recents) }
             }
-            .fixedSize()
 
-            ControlGroup {
+            GlassButtonGroup {
                 recordButton
                 button("Screenshot", Symbol.screenshot, .screenshot, action: model.takeScreenshot)
             }
-            .fixedSize()
             .frame(maxWidth: .infinity, alignment: .trailing)
         }
-        .labelStyle(.iconOnly)
-        .controlSize(model.isCompact ? .regular : .large)
         .padding(.horizontal, model.isCompact ? CompactWindowLayout.margin : Spacing.large)
         .padding(.vertical, model.isCompact ? 0 : Spacing.medium)
         .frame(height: model.isCompact ? CompactWindowLayout.footerHeight : nil)
-        .background(.bar)
     }
 
     @ViewBuilder private var recordButton: some View {
@@ -46,10 +40,10 @@ struct WorkspaceFooter: View {
                     if !model.isCompact {
                         Text(start, style: .timer)
                             .monospacedDigit()
+                            .font(.callout)
                     }
                 }
             }
-            .labelStyle(.titleAndIcon)
             .help("Stop recording")
             .accessibilityLabel("Stop recording")
         } else {
