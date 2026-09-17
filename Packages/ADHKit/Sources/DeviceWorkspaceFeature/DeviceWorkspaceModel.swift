@@ -90,9 +90,26 @@ public final class DeviceWorkspaceModel {
         return device?.availability(of: capability) ?? .hidden
     }
 
-    /// The screen size override, once read from the device.
+    /// The screen size override, once read from the device. Ignored while it describes another screen
+    /// (a resizable emulator that just switched presets).
     var displayMetrics: DisplayMetrics? {
-        (repository.inspector(for: deviceID) as? any DisplayOverriding)?.knownDisplayMetrics
+        guard let metrics = (repository.inspector(for: deviceID) as? any DisplayOverriding)?.knownDisplayMetrics
+        else { return nil }
+        if let size = session?.displaySize, size != metrics.physicalSize { return nil }
+        return metrics
+    }
+
+    var resizable: (any ResizableDisplayControlling)? {
+        guard availability(.resizableMode).isVisible else { return nil }
+        return session as? any ResizableDisplayControlling
+    }
+
+    func setResizableMode(_ mode: ResizableMode) {
+        guard let resizable, resizable.resizableMode != mode else { return }
+        perform {
+            try await resizable.setResizableMode(mode)
+            await self.loadDisplayMetrics(force: true)
+        }
     }
 
     /// The screen size to draw, in device pixels for the current orientation. It follows a size or
@@ -113,11 +130,11 @@ public final class DeviceWorkspaceModel {
         CGFloat(displayMetrics?.cornerScale(panelCorner: Double(frameStyle.screenCornerFraction)) ?? 1)
     }
 
-    /// Reads the device's screen override once ADB can reach it.
-    func loadDisplayMetrics() async {
+    /// Reads the device's screen override once ADB can reach it, or again when `force` is set.
+    func loadDisplayMetrics(force: Bool = false) async {
         guard device?.availability(of: .displaySize).isAvailable == true,
             let controller = repository.inspector(for: deviceID) as? any DisplayOverriding,
-            controller.knownDisplayMetrics == nil
+            force || controller.knownDisplayMetrics == nil
         else { return }
         _ = try? await controller.displayMetrics()
     }
@@ -125,6 +142,9 @@ public final class DeviceWorkspaceModel {
     /// The drawn frame around the screen.
     public var frameStyle: DeviceFrameStyle {
         guard let device else { return .phone }
+        if let mode = resizable?.resizableMode {
+            return mode.formFactor.frameStyle(isRound: false)
+        }
         let profile = device.virtualDevice?.hardwareProfileID ?? ""
         let isSquare = profile.contains("square") || profile.contains("rect")
         return device.formFactor.frameStyle(isRound: !isSquare)

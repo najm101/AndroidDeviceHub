@@ -122,4 +122,15 @@ struct SystemImageEntryTests {
         #expect([stable, canary].latest(path: stable.path)?.revision.major == 36)
         #expect([stable, canary].latest(path: stable.path, upTo: .canary)?.revision.major == 37)
     }
+
+    @Test func parsesResizableScreenPresetsAndSkipsBadEntries() {
+        let screens = ResizableScreen.parse("phone-0-1080-2340-420, tablet-2-1920-1200-240, junk, watch-9-1-1-1")
+        #expect(ResizableScreen.configValue([screens[1]]) == "tablet-2-1920-1200-240")
+        #expect(
+            screens == [
+                ResizableScreen(mode: .phone, width: 1080, height: 2340, density: 420),
+                ResizableScreen(mode: .tablet, width: 1920, height: 1200, density: 240),
+            ])
+        #expect(ResizableScreen.parse(ResizableScreen.configValue(screens)) == screens)
+    }
 }

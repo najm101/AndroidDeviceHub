@@ -70,6 +70,8 @@ public enum Capability: String, CaseIterable, Hashable, Sendable {
     case snapshots
     /// Screen size and density overrides (over ADB).
     case displaySize
+    /// Switching a resizable emulator between its screen presets.
+    case resizableMode
 }
 
 /// Whether a capability can be used right now.

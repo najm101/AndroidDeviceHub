@@ -112,6 +112,33 @@ struct AVDFileStoreTests {
         #expect(listed.map(\.id) == ["Pixel_8_API_36"])
     }
 
+    @Test func createsResizableDevicesWithScreenPresets() async throws {
+        let temp = try TemporaryDirectory()
+        let location = try makeLocation(temp)
+        var spec = TestData.specification()
+        spec.id = "Resizable_API_36"
+        spec.displayName = "Resizable API 36"
+        spec.profile = HardwareProfile(
+            id: "resizable", name: "Resizable (Experimental)", manufacturer: "Generic", formFactor: .foldable,
+            playStore: false, diagonalInches: 6, widthPixels: 1080, heightPixels: 2400, density: 420, ramMiB: 4096,
+            isFoldable: true
+        )
+
+        let device = try await store.create(spec, in: location)
+
+        #expect(device.resizableScreens == ResizableScreen.builtIn)
+        let config = IniDocument(
+            text: try String(contentsOf: device.directory.appending(path: "config.ini"), encoding: .utf8))
+        // Writing this key segfaults emulator 36.5; its built-in presets are used instead.
+        #expect(config["hw.resizable.configs"] == nil)
+        // The screen matches the emulator's phone preset, not the profile's own size.
+        #expect(config["hw.lcd.height"] == "2340")
+        #expect(config["hw.sensor.hinge.areas"] == "884-0-1-2208")
+
+        let phone = try await store.create(TestData.specification(), in: location)
+        #expect(phone.resizableScreens.isEmpty)
+    }
+
     @Test func rejectsDuplicateNamesIgnoringCase() async throws {
         let temp = try TemporaryDirectory()
         let location = try makeLocation(temp)

@@ -44,7 +44,7 @@ enum EmulatorCapabilities {
     }
 
     static func capabilities(
-        for state: DeviceState, formFactor: FormFactor, adb: ADBStatus = .unavailable
+        for state: DeviceState, formFactor: FormFactor, adb: ADBStatus = .unavailable, isResizable: Bool = false
     ) -> [Capability: Availability] {
         var result: [Capability: Availability] = [
             .revealInFinder: .available,
@@ -76,6 +76,9 @@ enum EmulatorCapabilities {
             result[.restart] = .available
             setADBTabs(in: &result, adb: adb)
             setADB(adbSettings, in: &result, adb: adb)
+            if isResizable {
+                result[.resizableMode] = .available
+            }
 
         case .running(inAppControl: false):
             setEditing(in: &result, to: .disabled(reason: stopFirst))

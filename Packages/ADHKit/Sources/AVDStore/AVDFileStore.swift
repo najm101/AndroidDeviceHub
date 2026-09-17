@@ -268,8 +268,15 @@ enum VirtualDeviceMapper {
             skinPath: config["skin.path"],
             networkSpeed: config["runtime.network.speed"].flatMap(NetworkSpeed.init(rawValue:)),
             networkLatency: config["runtime.network.latency"].flatMap(NetworkLatency.init(rawValue:)),
+            resizableScreens: resizableScreens(config),
             issues: issues
         )
+    }
+
+    /// The AVD's screen presets: what it lists, or the emulator's built-in ones for a resizable device.
+    static func resizableScreens(_ config: IniDocument) -> [ResizableScreen] {
+        if let listed = config["hw.resizable.configs"].map(ResizableScreen.parse), !listed.isEmpty { return listed }
+        return config["hw.device.name"] == "resizable" ? ResizableScreen.builtIn : []
     }
 
     /// `system-images/android-36.1/google_apis/arm64-v8a/` → 36.1; falls back to `target=android-36`.

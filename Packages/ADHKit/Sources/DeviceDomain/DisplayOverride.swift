@@ -1,4 +1,5 @@
 public import Foundation
+public import SDKDomain
 
 /// A device's screen: what the hardware has and what `wm size` / `wm density` currently override.
 ///
@@ -176,4 +177,15 @@ public protocol DisplayOverriding: AnyObject {
     func displayMetrics() async throws -> DisplayMetrics
     /// Applies an override, or restores the physical values when `nil`.
     func setDisplayOverride(_ configuration: DisplayConfiguration?) async throws
+}
+
+/// A "Resizable (Experimental)" emulator, which switches between phone, foldable, tablet and desktop
+/// screens while running.
+@MainActor
+public protocol ResizableDisplayControlling: AnyObject {
+    /// The presets this device offers, in menu order.
+    var resizableModes: [ResizableMode] { get }
+    /// The current preset, once the emulator has reported it. Observable.
+    var resizableMode: ResizableMode? { get }
+    func setResizableMode(_ mode: ResizableMode) async throws
 }

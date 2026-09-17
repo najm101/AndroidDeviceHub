@@ -37,6 +37,9 @@ public struct DeviceWorkspaceView: View {
                 }
                 .task(id: device.state) { await model.lookUpMissingImage() }
                 .task(id: device.availability(of: .displaySize)) { await model.loadDisplayMetrics() }
+                .task(id: model.resizable?.resizableMode) {
+                    if model.resizable != nil { await model.loadDisplayMetrics(force: true) }
+                }
                 .focusedSceneValue(\.deviceWorkspace, model)
                 .onChange(of: model.installs.inventoryRevision) {
                     Task { await model.inventoryChanged() }
@@ -75,6 +78,12 @@ public struct DeviceWorkspaceView: View {
     @ToolbarContentBuilder
     private func headerControls(for device: Device) -> some ToolbarContent {
         if !model.isCompact {
+            if let resizable = model.resizable {
+                ToolbarItem {
+                    resizableModeMenu(resizable)
+                }
+                ToolbarSpacer(.fixed)
+            }
             ToolbarItemGroup {
                 keyboardToggle
                 capabilityButton("Zoom Out", symbol: Symbol.zoomOut, capability: .zoom, action: model.zoomOut)
@@ -114,6 +123,28 @@ public struct DeviceWorkspaceView: View {
             .menuIndicator(.hidden)
             .help("Device actions")
         }
+    }
+
+    /// Switches a resizable emulator between its screen presets.
+    private func resizableModeMenu(_ resizable: any ResizableDisplayControlling) -> some View {
+        let current = resizable.resizableMode
+        return Menu {
+            ForEach(resizable.resizableModes) { mode in
+                Toggle(
+                    isOn: Binding {
+                        current == mode
+                    } set: {
+                        if $0 { model.setResizableMode(mode) }
+                    }
+                ) {
+                    Label(mode.title, systemImage: mode.formFactor.symbolName)
+                }
+            }
+        } label: {
+            Label("Screen Preset", systemImage: current?.formFactor.symbolName ?? Symbol.resizable)
+        }
+        .menuIndicator(.hidden)
+        .help("Screen preset: \(current?.title ?? "Unknown")")
     }
 
     @ViewBuilder private var keyboardToggle: some View {

@@ -10,6 +10,7 @@ public enum Symbol {
     public static let zoomOut = "minus.magnifyingglass"
     public static let zoomFit = "arrow.up.left.and.down.right.magnifyingglass"
     public static let keyboard = "keyboard"
+    public static let resizable = "rectangle.3.group"
     public static let rotateLeft = "rotate.left"
     public static let record = "record.circle"
     public static let screenshot = "camera"

@@ -26,6 +26,8 @@ public struct VirtualDevice: Hashable, Sendable, Identifiable {
     /// `runtime.network.*`, applied when the emulator boots.
     public var networkSpeed: NetworkSpeed?
     public var networkLatency: NetworkLatency?
+    /// The screen presets of a resizable emulator; empty for every other device.
+    public var resizableScreens: [ResizableScreen]
     /// Problems found while reading, e.g. a missing system image.
     public var issues: [VirtualDeviceIssue]
 
@@ -36,7 +38,7 @@ public struct VirtualDevice: Hashable, Sendable, Identifiable {
         screenWidth: Int? = nil, screenHeight: Int? = nil, density: Int? = nil, ramMiB: Int? = nil,
         cpuCores: Int? = nil, dataPartitionBytes: Int64? = nil, skinName: String? = nil, skinPath: String? = nil,
         networkSpeed: NetworkSpeed? = nil, networkLatency: NetworkLatency? = nil,
-        issues: [VirtualDeviceIssue] = []
+        resizableScreens: [ResizableScreen] = [], issues: [VirtualDeviceIssue] = []
     ) {
         self.id = id
         self.displayName = displayName
@@ -60,6 +62,7 @@ public struct VirtualDevice: Hashable, Sendable, Identifiable {
         self.skinPath = skinPath
         self.networkSpeed = networkSpeed
         self.networkLatency = networkLatency
+        self.resizableScreens = resizableScreens
         self.issues = issues
     }
 

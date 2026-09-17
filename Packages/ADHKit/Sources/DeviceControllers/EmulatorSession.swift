@@ -6,6 +6,7 @@ public import Foundation
 import Foundations
 import GRPCCore
 public import Observation
+public import SDKDomain
 import SwiftProtobuf
 import VideoCanvas
 import os
@@ -15,8 +16,10 @@ import os
 @Observable
 public final class EmulatorSession: DeviceSession {
     public let deviceID: DeviceID
-    public let displaySize: PixelSize
+    /// Changes when a resizable emulator switches presets.
+    public private(set) var displaySize: PixelSize
     public private(set) var rotation: DisplayRotation = .portrait
+    public private(set) var resizableMode: ResizableMode?
     public private(set) var connectionError: String?
 
     let client: EmulatorClient
@@ -28,21 +31,27 @@ public final class EmulatorSession: DeviceSession {
     @ObservationIgnored private let input: InputChannel
     @ObservationIgnored private var modelRotationDegrees: Float = 0
     @ObservationIgnored private let log = ADHLog.logger("EmulatorSession")
+    @ObservationIgnored private let resizableScreens: [ResizableScreen]
 
     public init(
         emulator: RunningEmulator,
         displaySize: PixelSize,
         frameDirectory: URL,
-        network: NetworkConditions = NetworkConditions()
+        network: NetworkConditions = NetworkConditions(),
+        resizableScreens: [ResizableScreen] = []
     ) throws {
         guard let port = emulator.grpcPort else { throw EmulatorSessionError.noEndpoint }
         deviceID = .emulator(avdID: emulator.avdID)
         self.displaySize = displaySize
+        self.resizableScreens = resizableScreens
         self.frameDirectory = frameDirectory
         self.network = network
         console = emulator.serialPort.map { EmulatorConsole(port: $0) }
         client = try EmulatorClient(port: port, token: emulator.grpcToken)
         input = InputChannel(client: client)
+        if !resizableScreens.isEmpty {
+            Task { [weak self] in await self?.loadResizableMode() }
+        }
     }
 
     public func close() {
@@ -54,7 +63,11 @@ public final class EmulatorSession: DeviceSession {
 
     public func frames(maxPixels: PixelSize) -> AsyncStream<ScreenFrame> {
         let client = client
-        let largest = max(displaySize.width, displaySize.height)
+        // Big enough for every preset, so switching doesn't need a new file.
+        let largest =
+            ([displaySize] + resizableScreens.map { PixelSize(width: $0.width, height: $0.height) })
+            .map { max($0.width, $0.height) }
+            .max() ?? 0
         let file = frameDirectory.appending(path: "\(UUID().uuidString).rgba", directoryHint: .notDirectory)
         return AsyncStream(bufferingPolicy: .bufferingNewest(1)) { continuation in
             let task = Task.detached { [weak self] in
@@ -172,6 +185,35 @@ public final class EmulatorSession: DeviceSession {
         var request = Android_Emulation_Control_VmRunState()
         request.state = state
         _ = try await client.controller.setVmState(request)
+    }
+}
+
+// MARK: - Resizable
+
+extension EmulatorSession: ResizableDisplayControlling {
+    public var resizableModes: [ResizableMode] { resizableScreens.map(\.mode) }
+
+    public func setResizableMode(_ mode: ResizableMode) async throws {
+        var request = Android_Emulation_Control_DisplayMode()
+        request.value = Android_Emulation_Control_DisplayModeValue(rawValue: mode.rawValue) ?? .phone
+        _ = try await client.controller.setDisplayMode(request)
+        apply(mode)
+    }
+
+    private func loadResizableMode() async {
+        do {
+            let reply = try await client.controller.getDisplayMode(Google_Protobuf_Empty())
+            if let mode = ResizableMode(rawValue: reply.value.rawValue) { apply(mode) }
+        } catch {
+            log.error("Can't read the display mode: \(error.localizedDescription, privacy: .public)")
+        }
+    }
+
+    private func apply(_ mode: ResizableMode) {
+        resizableMode = mode
+        if let screen = resizableScreens.first(where: { $0.mode == mode }) {
+            displaySize = PixelSize(width: screen.width, height: screen.height)
+        }
     }
 }
 

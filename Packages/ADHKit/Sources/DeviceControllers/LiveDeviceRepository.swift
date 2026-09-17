@@ -162,7 +162,8 @@ public final class LiveDeviceRepository: DeviceRepository {
             do {
                 let network = NetworkConditions(speed: avd.networkSpeed ?? .full, latency: avd.networkLatency ?? .none)
                 sessions[avdID] = try EmulatorSession(
-                    emulator: emulator, displaySize: size, frameDirectory: frameDirectory, network: network
+                    emulator: emulator, displaySize: size, frameDirectory: frameDirectory, network: network,
+                    resizableScreens: avd.resizableScreens
                 )
             } catch {
                 log.error(
@@ -239,7 +240,8 @@ public final class LiveDeviceRepository: DeviceRepository {
             screenSize: screen,
             hasPlayStore: avd.hasPlayStore,
             capabilities: EmulatorCapabilities.capabilities(
-                for: state, formFactor: formFactor, adb: adbStatus(for: avd.id, running: running)
+                for: state, formFactor: formFactor, adb: adbStatus(for: avd.id, running: running),
+                isResizable: !avd.resizableScreens.isEmpty
             ),
             virtualDevice: avd
         )

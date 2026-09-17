@@ -22,9 +22,11 @@ enum AVDConfigurationBuilder {
 
         config["hw.device.manufacturer"] = profile.manufacturer
         config["hw.device.name"] = profile.id
-        config["hw.lcd.width"] = String(profile.widthPixels)
-        config["hw.lcd.height"] = String(profile.heightPixels)
-        config["hw.lcd.density"] = String(profile.density)
+        // A resizable device starts in the emulator's phone preset, which its screen must match.
+        let screen = profile.isResizable ? ResizableScreen.builtIn.first { $0.mode == .phone } : nil
+        config["hw.lcd.width"] = String(screen?.width ?? profile.widthPixels)
+        config["hw.lcd.height"] = String(screen?.height ?? profile.heightPixels)
+        config["hw.lcd.density"] = String(screen?.density ?? profile.density)
         config["hw.initialOrientation"] = spec.orientation.rawValue
         config["hw.keyboard"] = yesNo(spec.useHostKeyboard || profile.hasHardwareKeyboard)
         config["hw.mainKeys"] = yesNo(profile.hasHardwareButtons)
@@ -67,6 +69,10 @@ enum AVDConfigurationBuilder {
         config["runtime.network.speed"] = spec.networkSpeed.rawValue
         config["runtime.network.latency"] = spec.networkLatency.rawValue
 
+        if profile.isResizable {
+            addResizableSettings(to: &config)
+        }
+
         if let skin = spec.skinPath {
             config["skin.name"] = skin.lastPathComponent
             config["skin.path"] = skin.path(percentEncoded: false)
@@ -93,6 +99,25 @@ enum AVDConfigurationBuilder {
                 : image.platformFolder
         }
         return ini
+    }
+
+    /// The hinge of the unfolded preset, as Android Studio writes it.
+    ///
+    /// `hw.resizable.configs` is deliberately left out: emulator 36.5 segfaults on start when
+    /// `config.ini` has it, and its built-in presets are the same values.
+    private static func addResizableSettings(to config: inout IniDocument) {
+        let unfolded = ResizableScreen.builtIn.first { $0.mode == .foldable }
+        config["hw.sensor.hinge"] = "yes"
+        config["hw.sensor.hinge.count"] = "1"
+        config["hw.sensor.hinge.type"] = "1"
+        config["hw.sensor.hinge.sub_type"] = "1"
+        config["hw.sensor.hinge.ranges"] = "180-360"
+        config["hw.sensor.hinge.defaults"] = "180"
+        config["hw.sensor.hinge.areas"] = unfolded.map { "\($0.width / 2)-0-1-\($0.height)" } ?? ""
+        config["hw.sensor.hinge.resizable.config"] = String(ResizableMode.foldable.rawValue)
+        config["hw.sensor.posture_list"] = "1, 2, 3"
+        config["hw.sensor.hinge_angles_posture_definitions"] = "180-330, 30-180, 0-30"
+        config["hw.sensor.hinge.fold_to_displayRegion.0.1_at_posture"] = "4"
     }
 
     private static func yesNo(_ value: Bool) -> String {
