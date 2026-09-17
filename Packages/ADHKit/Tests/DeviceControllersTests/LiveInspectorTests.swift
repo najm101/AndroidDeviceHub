@@ -19,7 +19,7 @@ struct LiveInspectorTests {
     @Test func info() async throws {
         let groups = try await inspector().properties()
         let values = Dictionary(
-            groups.flatMap(\.properties).map { ($0.title, $0.value) }, uniquingKeysWith: { a, _ in a })
+            groups.flatMap(\.properties).map { ($0.title, $0.value) }, uniquingKeysWith: { first, _ in first })
         #expect(values["API level"].flatMap(Int.init) != nil)
         #expect(values["RAM"] != nil)
         #expect(values["Resolution"]?.contains("x") == true)
