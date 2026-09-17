@@ -66,7 +66,7 @@ public struct SetupChecker: SetupChecking {
         } else if fileSystem.isWritableDirectory(at: location.sdkRoot) {
             status = .satisfied(detail: "Writable")
         } else {
-            status = .failed(detail: "Android Device App can't write to this folder")
+            status = .failed(detail: "Android Device Hub can't write to this folder")
         }
         return SetupCheck(id: .sdkWritable, title: "SDK folder access", level: .required, status: status)
     }

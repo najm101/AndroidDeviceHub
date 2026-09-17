@@ -1,4 +1,4 @@
-# Android Device App
+# Android Device Hub
 
 A native macOS app for creating and running Android emulators, without Android Studio or Java.
 Its design is inspired by Apple's Device Hub in macOS 27.
@@ -42,9 +42,9 @@ Its design is inspired by Apple's Device Hub in macOS 27.
 
 Requires **macOS 26 or later**. Only tested on Apple silicon.
 
-1. Download the latest `Android-Device-App-<version>.zip` from
+1. Download the latest `Android-Device-Hub-<version>.zip` from
    [Releases](https://github.com/najm101/AndroidDeviceHub/releases).
-2. Unzip it and drag **Android Device App** into your **Applications** folder.
+2. Unzip it and drag **Android Device Hub** into your **Applications** folder.
 3. Open it. On first launch, it walks you through setting up the Android SDK.
 
 Every change on `main` is built, signed, notarized and published as a new pre-release automatically.

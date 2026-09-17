@@ -1,6 +1,6 @@
 # Third-Party Notices
 
-Android Device App uses the following open source software.
+Android Device Hub uses the following open source software.
 
 ## Android Emulator gRPC definitions
 

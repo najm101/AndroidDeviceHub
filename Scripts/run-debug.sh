@@ -5,6 +5,6 @@ cd "$(dirname "$0")/.."
 xcodegen generate --quiet
 xcodebuild -project AndroidDeviceHub.xcodeproj -scheme AndroidDeviceHub -configuration Debug \
   -derivedDataPath build/DerivedData -destination 'platform=macOS' build -quiet
-pkill -x "Android Device App" 2>/dev/null || true
+pkill -x "Android Device Hub" 2>/dev/null || true
 sleep 0.5
-open "build/DerivedData/Build/Products/Debug/Android Device App.app"
+open "build/DerivedData/Build/Products/Debug/Android Device Hub.app"

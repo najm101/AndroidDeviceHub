@@ -40,7 +40,7 @@ final class AppComposition {
     init(preferences: any KeyValueStore = UserDefaultsStore()) {
         self.preferences = preferences
         let caches = URL.cachesDirectory.appending(
-            path: "io.github.najm101.AndroidDeviceApp", directoryHint: .isDirectory)
+            path: "io.github.najm101.AndroidDeviceHub", directoryHint: .isDirectory)
 
         locator = SDKLocator(preferences: preferences)
         catalog = RemoteSDKCatalog(cacheDirectory: caches.appending(path: "catalog", directoryHint: .isDirectory))

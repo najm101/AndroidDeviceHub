@@ -55,7 +55,7 @@ public struct OnboardingView: View {
                 .font(.system(size: 36))
                 .foregroundStyle(.tint)
             VStack(alignment: .leading, spacing: Spacing.xSmall) {
-                Text("Welcome to Android Device App")
+                Text("Welcome to Android Device Hub")
                     .font(.title2.bold())
                 Text("Step \(model.step.rawValue + 1) of \(OnboardingModel.Step.allCases.count) — \(model.step.title)")
                     .foregroundStyle(.secondary)
@@ -83,7 +83,7 @@ public struct OnboardingView: View {
                     .disabled(model.report?.hasPlatformTools != true)
             case .ready:
                 Button("Create a Device…") { model.finish(openNewEmulator: true) }
-                Button("Open Android Device App") { model.finish(openNewEmulator: false) }
+                Button("Open Android Device Hub") { model.finish(openNewEmulator: false) }
                     .keyboardShortcut(.defaultAction)
             }
         }
@@ -107,7 +107,7 @@ struct SDKStepView: View {
     var body: some View {
         VStack(alignment: .leading, spacing: Spacing.medium) {
             Text(
-                "Android Device App uses the Android SDK folder shared with Android Studio and Flutter. It doesn't need Java or Android Studio."
+                "Android Device Hub uses the Android SDK folder shared with Android Studio and Flutter. It doesn't need Java or Android Studio."
             )
             .foregroundStyle(.secondary)
             .fixedSize(horizontal: false, vertical: true)

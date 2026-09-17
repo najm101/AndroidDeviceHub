@@ -130,7 +130,7 @@ final class CompactWindowUITests: XCTestCase {
     private func snapshot(label: String = UUID().uuidString, resizingTo size: String? = nil) -> URL? {
         let folder = snapshots.appending(path: label)
         DistributedNotificationCenter.default().postNotificationName(
-            Notification.Name("io.github.najm101.AndroidDeviceApp.debugSnapshot"),
+            Notification.Name("io.github.najm101.AndroidDeviceHub.debugSnapshot"),
             object: folder.path + (size.map { "|\($0)" } ?? ""),
             userInfo: nil,
             deliverImmediately: true

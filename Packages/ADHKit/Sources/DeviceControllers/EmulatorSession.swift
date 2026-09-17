@@ -179,7 +179,7 @@ public enum EmulatorSessionError: LocalizedError {
     case noEndpoint
 
     public var errorDescription: String? {
-        "This emulator doesn't accept connections from Android Device App. Restart it from here."
+        "This emulator doesn't accept connections from Android Device Hub. Restart it from here."
     }
 }
 

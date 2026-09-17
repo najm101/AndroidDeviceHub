@@ -34,7 +34,7 @@ final class SetupFlowUITests: XCTestCase {
         app.launchArguments += ["-onboarding.completedVersion", "0"]
         app.launch()
         let window = app.windows.firstMatch
-        XCTAssertTrue(window.staticTexts["Welcome to Android Device App"].waitForExistence(timeout: 20))
+        XCTAssertTrue(window.staticTexts["Welcome to Android Device Hub"].waitForExistence(timeout: 20))
 
         // Step 1 passes with a working SDK; step 2 only appears without Platform Tools.
         let continueButton = window.buttons["Continue"]
@@ -43,7 +43,7 @@ final class SetupFlowUITests: XCTestCase {
         if window.buttons["Skip"].waitForExistence(timeout: 3) {
             window.buttons["Skip"].click()
         }
-        let open = window.buttons["Open Android Device App"]
+        let open = window.buttons["Open Android Device Hub"]
         XCTAssertTrue(open.waitForExistence(timeout: 10))
         open.click()
         XCTAssertTrue(window.buttons["New Emulator…"].waitForExistence(timeout: 10), "Empty devices folder")

@@ -15,7 +15,7 @@ public enum DirectoryWatcher {
             let source = DispatchSource.makeFileSystemObjectSource(
                 fileDescriptor: descriptor,
                 eventMask: [.write, .rename, .delete, .link],
-                queue: DispatchQueue(label: "io.github.najm101.AndroidDeviceApp.directory-watcher")
+                queue: DispatchQueue(label: "io.github.najm101.AndroidDeviceHub.directory-watcher")
             )
             source.setEventHandler { continuation.yield() }
             source.setCancelHandler { close(descriptor) }

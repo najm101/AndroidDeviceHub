@@ -9,7 +9,7 @@ public enum LocationSource: Hashable, Sendable {
 
     public var title: String {
         switch self {
-        case .userSelection: "Chosen in Android Device App"
+        case .userSelection: "Chosen in Android Device Hub"
         case let .environment(variable): "From $\(variable)"
         case .androidStudio: "From Android Studio settings"
         case .defaultLocation: "Default location"

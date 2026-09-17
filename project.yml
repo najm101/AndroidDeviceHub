@@ -34,8 +34,8 @@ targets:
         product: ADHKit
     settings:
       base:
-        PRODUCT_NAME: Android Device App
-        PRODUCT_BUNDLE_IDENTIFIER: io.github.najm101.AndroidDeviceApp
+        PRODUCT_NAME: Android Device Hub
+        PRODUCT_BUNDLE_IDENTIFIER: io.github.najm101.AndroidDeviceHub
         INFOPLIST_FILE: App/Resources/Info.plist
         CODE_SIGN_ENTITLEMENTS: App/Resources/AndroidDeviceHub.entitlements
         ENABLE_HARDENED_RUNTIME: YES
@@ -60,7 +60,7 @@ targets:
       - target: AndroidDeviceHub
     settings:
       base:
-        PRODUCT_BUNDLE_IDENTIFIER: io.github.najm101.AndroidDeviceAppUITests
+        PRODUCT_BUNDLE_IDENTIFIER: io.github.najm101.AndroidDeviceHubUITests
         TEST_TARGET_NAME: AndroidDeviceHub
         # A stable signature keeps macOS privacy grants (e.g. removable volumes) across rebuilds;
         # ad-hoc signatures change every build.

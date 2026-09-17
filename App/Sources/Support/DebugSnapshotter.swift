@@ -8,7 +8,7 @@
     ///     Scripts/snapshot.sh /tmp/shots 1300x900   # resizes the main window first
     @MainActor
     enum DebugSnapshotter {
-        static let notification = Notification.Name("io.github.najm101.AndroidDeviceApp.debugSnapshot")
+        static let notification = Notification.Name("io.github.najm101.AndroidDeviceHub.debugSnapshot")
 
         static func install() {
             DistributedNotificationCenter.default().addObserver(

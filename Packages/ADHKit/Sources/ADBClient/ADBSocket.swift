@@ -7,7 +7,7 @@ import os
 /// Used by one task at a time: every method is called sequentially by its owner.
 final class ADBSocket: @unchecked Sendable {
     private let connection: NWConnection
-    private let queue = DispatchQueue(label: "io.github.najm101.AndroidDeviceApp.adb")
+    private let queue = DispatchQueue(label: "io.github.najm101.AndroidDeviceHub.adb")
     private var buffer = Data()
     private var isAtEnd = false
 

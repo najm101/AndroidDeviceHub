@@ -128,7 +128,7 @@ struct ConsoleLineBuffer {
 /// A minimal async wrapper around `NWConnection` for the console.
 private final class ConsoleConnection: @unchecked Sendable {
     private let connection: NWConnection
-    private let queue = DispatchQueue(label: "io.github.najm101.AndroidDeviceApp.console")
+    private let queue = DispatchQueue(label: "io.github.najm101.AndroidDeviceHub.console")
     // Only touched from the calling task, one call at a time.
     private var buffer = ConsoleLineBuffer()
 

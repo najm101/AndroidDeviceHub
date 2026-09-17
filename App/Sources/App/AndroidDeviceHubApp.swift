@@ -13,7 +13,7 @@ struct AndroidDeviceHubApp: App {
     }
 
     var body: some Scene {
-        Window("Android Device App", id: "main") {
+        Window("Android Device Hub", id: "main") {
             RootView(app: app)
         }
         .defaultSize(width: 1200, height: 780)

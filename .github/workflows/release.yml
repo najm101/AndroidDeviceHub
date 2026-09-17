@@ -32,8 +32,8 @@ permissions:
   contents: write
 
 env:
-  APP_NAME: Android Device App
-  ASSET_PREFIX: Android-Device-App
+  APP_NAME: Android Device Hub
+  ASSET_PREFIX: Android-Device-Hub
 
 jobs:
   release:
