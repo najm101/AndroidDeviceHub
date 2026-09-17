@@ -1,3 +1,4 @@
+import CoreGraphics
 import DeviceDomain
 import Testing
 
@@ -38,6 +39,24 @@ struct DisplayOverrideTests {
         #expect(phone.densityKeepingPhysicalSize(for: PixelSize(width: 540, height: 1200)) == 210)
         // A wider shape is letterboxed, so the width decides the scale.
         #expect(phone.densityKeepingPhysicalSize(for: PixelSize(width: 2160, height: 2400)) == 840)
+    }
+
+    @Test func overridesChangeTheDrawnShapeAndSize() {
+        #expect(phone.contentArea == CGRect(x: 0, y: 0, width: 1, height: 1))
+        #expect(phone.apparentSize == phone.physicalSize)
+
+        var tablet = phone
+        tablet.overrideSize = PixelSize(width: 1080, height: 1728)
+        tablet.overrideDensity = 216
+        #expect(tablet.contentArea.width == 1)
+        #expect(abs(tablet.contentArea.height - 0.72) < 0.0001)
+        #expect(abs(tablet.contentArea.minY - 0.14) < 0.0001)
+        // 800 × 1280 dp drawn at the panel's 420 dpi.
+        #expect(tablet.apparentSize == PixelSize(width: 2100, height: 3360))
+
+        var denser = phone
+        denser.overrideDensity = 840
+        #expect(denser.apparentSize == PixelSize(width: 540, height: 1200))
     }
 
     @Test func rejectsValuesAndroidWouldRefuse() {

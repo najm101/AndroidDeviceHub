@@ -2,18 +2,21 @@ public import ADBClient
 public import DeviceDomain
 public import Foundation
 import Foundations
+public import Observation
 import ZIPFoundation
 
 /// Info, apps, profiles, files and reports for one device, over ADB.
 @MainActor
+@Observable
 public final class ADBInspector: DeviceInspecting {
-    public let serial: String
-    public let homeDirectory: String
-    let device: ADBDevice
+    public internal(set) var knownDisplayMetrics: DisplayMetrics?
+    @ObservationIgnored public let serial: String
+    @ObservationIgnored public let homeDirectory: String
+    @ObservationIgnored let device: ADBDevice
     /// Extra rows shown at the end of Info (the emulator's own details).
-    private let extraProperties: [DevicePropertyGroup]
-    private let temporaryDirectory: URL
-    private let labelCache: AppLabelCache
+    @ObservationIgnored private let extraProperties: [DevicePropertyGroup]
+    @ObservationIgnored private let temporaryDirectory: URL
+    @ObservationIgnored private let labelCache: AppLabelCache
 
     public init(
         device: ADBDevice,

@@ -36,6 +36,7 @@ public struct DeviceWorkspaceView: View {
                     Text(model.errorMessage ?? "")
                 }
                 .task(id: device.state) { await model.lookUpMissingImage() }
+                .task(id: device.availability(of: .displaySize)) { await model.loadDisplayMetrics() }
                 .focusedSceneValue(\.deviceWorkspace, model)
                 .onChange(of: model.installs.inventoryRevision) {
                     Task { await model.inventoryChanged() }
@@ -55,7 +56,11 @@ public struct DeviceWorkspaceView: View {
                 zoom: model.isCompact ? .fit : model.zoom
             ) {
                 if case .running(inAppControl: true) = device.state, let session = model.session {
-                    DeviceScreenView(session: session, capturesKeyboard: model.capturesKeyboard)
+                    DeviceScreenView(
+                        session: session,
+                        capturesKeyboard: model.capturesKeyboard,
+                        visibleArea: model.visibleScreenArea
+                    )
                 } else {
                     CanvasOverlay(model: model, device: device)
                 }

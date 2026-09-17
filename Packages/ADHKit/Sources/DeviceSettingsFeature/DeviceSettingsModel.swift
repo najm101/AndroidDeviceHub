@@ -209,6 +209,8 @@ public final class DeviceSettingsModel {
             busySections.insert(.screenSize)
             defer { busySections.remove(.screenSize) }
             await display.apply(target)
+            // Pick up what the device settled on (it can round values).
+            await display.load()
         }
     }
 

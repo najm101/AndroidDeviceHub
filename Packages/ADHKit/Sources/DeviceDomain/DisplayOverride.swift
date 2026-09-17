@@ -9,7 +9,12 @@ public struct DisplayMetrics: Hashable, Sendable {
     public var overrideSize: PixelSize?
     public var overrideDensity: Int?
 
-    public init(physicalSize: PixelSize, physicalDensity: Int, overrideSize: PixelSize? = nil, overrideDensity: Int? = nil) {
+    public init(
+        physicalSize: PixelSize,
+        physicalDensity: Int,
+        overrideSize: PixelSize? = nil,
+        overrideDensity: Int? = nil
+    ) {
         self.physicalSize = physicalSize
         self.physicalDensity = physicalDensity
         self.overrideSize = overrideSize
@@ -25,6 +30,32 @@ public struct DisplayMetrics: Hashable, Sendable {
     }
 
     public var isOverridden: Bool { overrideSize != nil || overrideDensity != nil }
+
+    /// The part of the panel Android draws on, as fractions of the panel. An override size with another
+    /// shape is scaled to fit and centered, leaving black bars.
+    public var contentArea: CGRect {
+        guard let size = overrideSize, size.width > 0, size.height > 0,
+            physicalSize.width > 0, physicalSize.height > 0
+        else { return CGRect(x: 0, y: 0, width: 1, height: 1) }
+        let panelWidth = Double(physicalSize.width)
+        let panelHeight = Double(physicalSize.height)
+        let scale = min(panelWidth / Double(size.width), panelHeight / Double(size.height))
+        let width = Double(size.width) * scale / panelWidth
+        let height = Double(size.height) * scale / panelHeight
+        return CGRect(x: (1 - width) / 2, y: (1 - height) / 2, width: width, height: height)
+    }
+
+    /// The screen size to draw the device at, in panel pixels: the current size at the panel's density.
+    /// A lower density makes the device look bigger, as it would be in real life.
+    public var apparentSize: PixelSize {
+        let current = current
+        guard current.density > 0 else { return current.size }
+        let factor = Double(physicalDensity) / Double(current.density)
+        return PixelSize(
+            width: Int((Double(current.size.width) * factor).rounded()),
+            height: Int((Double(current.size.height) * factor).rounded())
+        )
+    }
 
     /// The density that makes `size` show things at their real-world size on this screen.
     ///
@@ -125,6 +156,8 @@ public struct ScreenPreset: Hashable, Codable, Sendable, Identifiable {
 /// The overrides live on the device until reset or a data wipe; the hardware profile isn't changed.
 @MainActor
 public protocol DisplayOverriding: AnyObject {
+    /// The metrics last read or applied, so the canvas can follow changes. Observable.
+    var knownDisplayMetrics: DisplayMetrics? { get }
     func displayMetrics() async throws -> DisplayMetrics
     /// Applies an override, or restores the physical values when `nil`.
     func setDisplayOverride(_ configuration: DisplayConfiguration?) async throws

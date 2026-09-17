@@ -8,16 +8,25 @@ public import SwiftUI
 public struct DeviceScreenView: NSViewRepresentable {
     private let session: any DeviceSession
     private let capturesKeyboard: Bool
+    private let visibleArea: CGRect
 
-    public init(session: any DeviceSession, capturesKeyboard: Bool) {
+    /// `visibleArea` is the part of the portrait screen to show, as fractions of it and centered. It
+    /// crops the black bars around a screen size override.
+    public init(
+        session: any DeviceSession,
+        capturesKeyboard: Bool,
+        visibleArea: CGRect = CGRect(x: 0, y: 0, width: 1, height: 1)
+    ) {
         self.session = session
         self.capturesKeyboard = capturesKeyboard
+        self.visibleArea = visibleArea
     }
 
     public func makeNSView(context: Context) -> ScreenLayerView {
         let view = ScreenLayerView()
         view.session = session
         view.capturesKeyboard = capturesKeyboard
+        view.visibleArea = visibleArea
         return view
     }
 
@@ -26,6 +35,9 @@ public struct DeviceScreenView: NSViewRepresentable {
             view.session = session
         }
         view.capturesKeyboard = capturesKeyboard
+        if view.visibleArea != visibleArea {
+            view.visibleArea = visibleArea
+        }
     }
 
     public static func dismantleNSView(_ view: ScreenLayerView, coordinator: ()) {
@@ -43,6 +55,13 @@ public final class ScreenLayerView: NSView {
             if capturesKeyboard, window?.firstResponder !== self {
                 window?.makeFirstResponder(self)
             }
+        }
+    }
+
+    var visibleArea = CGRect(x: 0, y: 0, width: 1, height: 1) {
+        didSet {
+            updateContentsRect()
+            scheduleResize()
         }
     }
 
@@ -108,14 +127,20 @@ public final class ScreenLayerView: NSView {
         }
     }
 
+    /// Frames are requested at twice the shown size, when the device has that many pixels. The
+    /// emulator's own scaling blurs small text; Core Animation's 2:1 downscale keeps it sharp.
+    private static let supersampling: CGFloat = 2
+
     private func targetPixels() -> PixelSize {
         guard let session else { return PixelSize(width: 0, height: 0) }
         let scale = window?.backingScaleFactor ?? 2
         let display = session.displaySize
         let longest = CGFloat(max(display.width, display.height))
+        // A cropped screen shows only part of each frame, so the frame must be larger to stay sharp.
+        let cropped = max(min(visibleArea.width, visibleArea.height), 0.1)
+        let wanted = max(bounds.width, bounds.height) * scale * Self.supersampling / cropped
         // Request a square bound so rotation doesn't need a new stream; never exceed the device size.
-        let viewLongest = max(bounds.width, bounds.height) * scale
-        let side = Int(min(longest, max(viewLongest, 320)).rounded())
+        let side = Int(min(longest, max(wanted, 320)).rounded())
         return PixelSize(width: side, height: side)
     }
 
@@ -142,8 +167,18 @@ public final class ScreenLayerView: NSView {
             layer?.contents = nil
         }
         layer?.contents = frame.surface
+        if screenRotation != frame.rotation {
+            screenRotation = frame.rotation
+            updateContentsRect()
+        }
         CATransaction.commit()
-        screenRotation = frame.rotation
+    }
+
+    private func updateContentsRect() {
+        CATransaction.begin()
+        CATransaction.setDisableActions(true)
+        layer?.contentsRect = orientedVisibleArea
+        CATransaction.commit()
     }
 
     // MARK: - Coordinates
@@ -156,9 +191,27 @@ public final class ScreenLayerView: NSView {
             : CGSize(width: size.width, height: size.height)
     }
 
+    /// `visibleArea` for the current orientation. The area is centered, so rotating only swaps its sides.
+    private var orientedVisibleArea: CGRect {
+        guard screenRotation.isLandscape else { return visibleArea }
+        return CGRect(
+            x: visibleArea.minY, y: visibleArea.minX, width: visibleArea.height, height: visibleArea.width
+        )
+    }
+
+    /// The shown part of the screen, in device pixels for the current orientation.
+    private var visibleDisplayRect: CGRect {
+        let display = orientedDisplaySize
+        let area = orientedVisibleArea
+        return CGRect(
+            x: area.minX * display.width, y: area.minY * display.height,
+            width: area.width * display.width, height: area.height * display.height
+        )
+    }
+
     /// The rect the aspect-fit screen image occupies inside the view.
     private var contentRect: CGRect {
-        let display = orientedDisplaySize
+        let display = visibleDisplayRect.size
         guard display.width > 0, display.height > 0 else { return bounds }
         let scale = min(bounds.width / display.width, bounds.height / display.height)
         let size = CGSize(width: display.width * scale, height: display.height * scale)
@@ -171,10 +224,10 @@ public final class ScreenLayerView: NSView {
     private func devicePoint(for event: NSEvent) -> CGPoint {
         let local = convert(event.locationInWindow, from: nil)
         let rect = contentRect
-        let display = orientedDisplaySize
-        let x = (local.x - rect.minX) / rect.width * display.width
-        let y = (local.y - rect.minY) / rect.height * display.height
-        return CGPoint(x: min(max(x, 0), display.width - 1), y: min(max(y, 0), display.height - 1))
+        let visible = visibleDisplayRect
+        let x = visible.minX + (local.x - rect.minX) / rect.width * visible.width
+        let y = visible.minY + (local.y - rect.minY) / rect.height * visible.height
+        return CGPoint(x: min(max(x, visible.minX), visible.maxX - 1), y: min(max(y, visible.minY), visible.maxY - 1))
     }
 
     // MARK: - Pointer input

@@ -161,6 +161,8 @@ extension LogEntry {
 }
 
 extension FakeInspector: DisplayOverriding {
+    public var knownDisplayMetrics: DisplayMetrics? { display }
+
     public func displayMetrics() async throws -> DisplayMetrics {
         try record("wm")
         return display

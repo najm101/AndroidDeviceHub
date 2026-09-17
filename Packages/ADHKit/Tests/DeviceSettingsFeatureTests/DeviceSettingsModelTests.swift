@@ -42,12 +42,12 @@ struct DeviceSettingsModelTests {
 
         model.applyPreset(ScreenPreset(name: "Tablet", widthDP: 800, heightDP: 1280))
         await settle()
-        #expect(inspector.log.last == "wm 1080x1728@216")
+        #expect(inspector.log.suffix(2) == ["wm 1080x1728@216", "wm"])
         #expect(model.display.value?.current.sizeDP == PixelSize(width: 800, height: 1280))
 
         model.applyDisplay(try #require(model.display.value).physical)
         await settle()
-        #expect(inspector.log.last == "wm reset")
+        #expect(inspector.log.suffix(2) == ["wm reset", "wm"])
         #expect(model.display.value?.isOverridden == false)
 
         model.applyDisplay(DisplayConfiguration(size: PixelSize(width: 10, height: 10), density: 420))

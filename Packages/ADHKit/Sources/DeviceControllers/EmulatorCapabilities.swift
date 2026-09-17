@@ -89,7 +89,11 @@ enum EmulatorCapabilities {
         setADB(adbTabs, in: &result, adb: adb)
     }
 
-    private static func setADB(_ capabilities: [Capability], in result: inout [Capability: Availability], adb: ADBStatus) {
+    private static func setADB(
+        _ capabilities: [Capability],
+        in result: inout [Capability: Availability],
+        adb: ADBStatus
+    ) {
         switch adb {
         case .ready: set(capabilities, in: &result, to: .available)
         case .connecting: set(capabilities, in: &result, to: .disabled(reason: InspectorHint.connecting))

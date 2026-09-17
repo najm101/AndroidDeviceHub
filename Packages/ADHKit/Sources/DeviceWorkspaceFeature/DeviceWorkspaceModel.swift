@@ -90,11 +90,31 @@ public final class DeviceWorkspaceModel {
         return device?.availability(of: capability) ?? .hidden
     }
 
-    /// The screen size in device pixels for the current orientation.
+    /// The screen size override, once read from the device.
+    var displayMetrics: DisplayMetrics? {
+        (repository.inspector(for: deviceID) as? any DisplayOverriding)?.knownDisplayMetrics
+    }
+
+    /// The screen size to draw, in device pixels for the current orientation. It follows a size or
+    /// density override, so the frame takes the shape and real-world size Android shows.
     public var orientedScreenSize: PixelSize? {
-        guard let size = session?.displaySize ?? device?.screenSize else { return nil }
+        guard let size = displayMetrics?.apparentSize ?? session?.displaySize ?? device?.screenSize else { return nil }
         guard session?.rotation.isLandscape == true else { return size }
         return PixelSize(width: size.height, height: size.width)
+    }
+
+    /// The part of the panel to show: all of it, or where Android draws an override size.
+    var visibleScreenArea: CGRect {
+        displayMetrics?.contentArea ?? CGRect(x: 0, y: 0, width: 1, height: 1)
+    }
+
+    /// Reads the device's screen override once ADB can reach it.
+    func loadDisplayMetrics() async {
+        guard device?.availability(of: .displaySize).isAvailable == true,
+            let controller = repository.inspector(for: deviceID) as? any DisplayOverriding,
+            controller.knownDisplayMetrics == nil
+        else { return }
+        _ = try? await controller.displayMetrics()
     }
 
     /// The drawn frame around the screen.
