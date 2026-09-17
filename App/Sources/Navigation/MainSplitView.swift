@@ -46,10 +46,16 @@ struct MainSplitView: View {
             InspectorContainer(app: app)
                 .frame(minWidth: 0, maxWidth: .infinity, minHeight: 0, maxHeight: .infinity)
                 .inspectorColumnWidth(min: Layout.inspectorMinWidth, ideal: Layout.inspectorWidth, max: 420)
-                // Declaring the toggle here gives the inspector its own toolbar section (it stays visible
+                // Declaring the tabs and toggle here gives the inspector its own toolbar section (it stays visible
                 // while the inspector is collapsed), so the workspace controls stay above the canvas.
                 .toolbar {
                     ToolbarSpacer(.flexible)
+                    if inspectorPresented.wrappedValue, app.visibleInspectorTabs.count > 1 {
+                        ToolbarItem {
+                            InspectorTabPicker(app: app)
+                        }
+                        ToolbarSpacer(.fixed)
+                    }
                     ToolbarItem {
                         InspectorToggle(isVisible: $app.isInspectorVisible)
                             .disabled(!app.canShowInspector)
