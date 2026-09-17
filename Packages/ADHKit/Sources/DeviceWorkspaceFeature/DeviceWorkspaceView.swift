@@ -64,36 +64,19 @@ public struct DeviceWorkspaceView: View {
         }
     }
 
-    /// Normal window: keyboard, zoom, then compact and the device menu. The compact window keeps only
-    /// the last two, like Xcode's Device Hub.
+    /// Normal window: one group with the keyboard and zoom, then one with compact and the device menu.
+    /// The compact window keeps only the second group, like Xcode's Device Hub.
     @ToolbarContentBuilder
     private func headerControls(for device: Device) -> some ToolbarContent {
         if !model.isCompact {
-            ToolbarItem {
-                let availability = model.availability(.keyboardMode)
-                Toggle(isOn: $model.capturesKeyboard) {
-                    Label("Mac Keyboard", systemImage: Symbol.keyboard)
-                }
-                .toggleStyle(.button)
-                .availability(
-                    isVisible: availability.isVisible,
-                    isEnabled: availability.isAvailable,
-                    reason: availability.reason
-                        ?? (model.capturesKeyboard
-                            ? "Typing goes to the device. Click to type in the Mac instead."
-                            : "Click to send your Mac keyboard to the device.")
-                )
-            }
-            ToolbarSpacer(.fixed)
             ToolbarItemGroup {
-                ControlGroup {
-                    capabilityButton("Zoom Out", symbol: Symbol.zoomOut, capability: .zoom, action: model.zoomOut)
-                    capabilityButton(
-                        "Fit to Window (\(model.zoom.percentage))", symbol: Symbol.zoomFit, capability: .zoom,
-                        action: model.zoomToFit
-                    )
-                    capabilityButton("Zoom In", symbol: Symbol.zoomIn, capability: .zoom, action: model.zoomIn)
-                }
+                keyboardToggle
+                capabilityButton("Zoom Out", symbol: Symbol.zoomOut, capability: .zoom, action: model.zoomOut)
+                capabilityButton(
+                    "Fit to Window (\(model.zoom.percentage))", symbol: Symbol.zoomFit, capability: .zoom,
+                    action: model.zoomToFit
+                )
+                capabilityButton("Zoom In", symbol: Symbol.zoomIn, capability: .zoom, action: model.zoomIn)
             }
             ToolbarSpacer(.fixed)
         } else {
@@ -101,32 +84,46 @@ public struct DeviceWorkspaceView: View {
             ToolbarSpacer(.flexible)
         }
         ToolbarItemGroup {
-            ControlGroup {
-                if model.isCompact {
-                    capabilityButton(
-                        "Exit Compact Window", symbol: Symbol.expand, capability: .compactWindow,
-                        help: "Expand to view all controls", action: model.toggleCompact
-                    )
-                } else {
-                    capabilityButton(
-                        "Compact Window", symbol: Symbol.compact, capability: .compactWindow,
-                        action: model.toggleCompact
-                    )
-                }
-                Menu {
-                    DeviceActionMenuItems(
-                        device: device,
-                        repository: model.repository,
-                        request: $model.actionRequest,
-                        onError: model.show
-                    )
-                } label: {
-                    Label("Device", systemImage: Symbol.more)
-                }
-                .menuIndicator(.hidden)
-                .help("Device actions")
+            if model.isCompact {
+                capabilityButton(
+                    "Exit Compact Window", symbol: Symbol.expand, capability: .compactWindow,
+                    help: "Expand to view all controls", action: model.toggleCompact
+                )
+            } else {
+                capabilityButton(
+                    "Compact Window", symbol: Symbol.compact, capability: .compactWindow,
+                    action: model.toggleCompact
+                )
             }
+            Menu {
+                DeviceActionMenuItems(
+                    device: device,
+                    repository: model.repository,
+                    request: $model.actionRequest,
+                    onError: model.show
+                )
+            } label: {
+                Label("Device", systemImage: Symbol.more)
+            }
+            .menuIndicator(.hidden)
+            .help("Device actions")
         }
+    }
+
+    @ViewBuilder private var keyboardToggle: some View {
+        let availability = model.availability(.keyboardMode)
+        Toggle(isOn: $model.capturesKeyboard) {
+            Label("Mac Keyboard", systemImage: Symbol.keyboard)
+        }
+        .toggleStyle(.button)
+        .availability(
+            isVisible: availability.isVisible,
+            isEnabled: availability.isAvailable,
+            reason: availability.reason
+                ?? (model.capturesKeyboard
+                    ? "Typing goes to the device. Click to type in the Mac instead."
+                    : "Click to send your Mac keyboard to the device.")
+        )
     }
 
     @ViewBuilder
