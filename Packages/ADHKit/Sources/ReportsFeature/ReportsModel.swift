@@ -121,7 +121,12 @@ public final class ReportsModel {
                     self.bugReport = .running(progress: progress)
                 }
             }
-            let result = await Result { try await inspector.bugReport(into: folder) { updates.continuation.yield($0) } }
+            let result: Result<URL, any Error>
+            do {
+                result = .success(try await inspector.bugReport(into: folder) { updates.continuation.yield($0) })
+            } catch {
+                result = .failure(error)
+            }
             // Let pending progress updates land before showing the outcome.
             updates.continuation.finish()
             await watcher.value
