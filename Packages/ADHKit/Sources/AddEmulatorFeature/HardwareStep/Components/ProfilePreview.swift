@@ -33,7 +33,6 @@ struct ProfilePreview: View {
                 ContentUnavailableView("No Device Selected", systemImage: "iphone")
             }
         }
-        .frame(maxHeight: .infinity, alignment: .top)
-        .padding(.top, Spacing.small)
+        .frame(maxHeight: .infinity)
     }
 }
