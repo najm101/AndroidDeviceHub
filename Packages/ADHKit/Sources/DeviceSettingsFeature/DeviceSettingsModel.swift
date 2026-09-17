@@ -1,14 +1,18 @@
 public import DeviceDomain
 import Foundation
+public import Foundations
 public import Observation
 
 /// Dependencies of the settings inspector, wired by the app.
 @MainActor
 public struct DeviceSettingsDependencies {
     public var repository: any DeviceRepository
+    /// Keeps the user's screen size presets.
+    public var preferences: any KeyValueStore
 
-    public init(repository: any DeviceRepository) {
+    public init(repository: any DeviceRepository, preferences: any KeyValueStore = InMemoryKeyValueStore()) {
         self.repository = repository
+        self.preferences = preferences
     }
 }
 
@@ -32,6 +36,8 @@ public final class DeviceSettingsModel {
     private(set) var hostMicrophone: LiveSetting<Bool>!
     private(set) var clipboard: LiveSetting<String>!
     private(set) var snapshots: LiveSetting<[DeviceSnapshot]>!
+    private(set) var display: LiveSetting<DisplayMetrics>!
+    private(set) var customScreenPresets: [ScreenPreset] = []
 
     // Actions without a readable value
     var phoneNumber = "5551234567"
@@ -69,6 +75,21 @@ public final class DeviceSettingsModel {
             write: { try await $0.setUsesHostMicrophone($1) }
         )
         clipboard = setting(.clipboard, read: { try await $0.clipboard() }, write: { try await $0.setClipboard($1) })
+        display = LiveSetting(
+            read: { [weak self] in
+                guard let self else { throw CancellationError() }
+                let metrics = try await displayController().displayMetrics()
+                errors[.screenSize] = nil
+                return metrics
+            },
+            write: { [weak self] metrics in
+                guard let self else { return }
+                try await displayController().setDisplayOverride(metrics.isOverridden ? metrics.current : nil)
+                errors[.screenSize] = nil
+            },
+            report: { [weak self] in self?.show($0, in: .screenSize) }
+        )
+        customScreenPresets = Self.loadPresets(from: dependencies.preferences)
         snapshots = LiveSetting(
             read: { [weak self] in try await self?.snapshotManager().snapshots() ?? [] },
             write: { _ in },
@@ -167,6 +188,62 @@ public final class DeviceSettingsModel {
         Task { await clipboard.apply(text) }
     }
 
+    // MARK: - Screen size
+
+    /// Overrides the screen, or restores the physical one when `configuration` equals it or is `nil`.
+    func applyDisplay(_ configuration: DisplayConfiguration?) {
+        guard var metrics = display.value else { return }
+        if let configuration, configuration != metrics.physical {
+            if let problem = configuration.validationError {
+                errors[.screenSize] = problem
+                return
+            }
+            metrics.overrideSize = configuration.size
+            metrics.overrideDensity = configuration.density
+        } else {
+            metrics.overrideSize = nil
+            metrics.overrideDensity = nil
+        }
+        let target = metrics
+        Task {
+            busySections.insert(.screenSize)
+            defer { busySections.remove(.screenSize) }
+            await display.apply(target)
+        }
+    }
+
+    func applyPreset(_ preset: ScreenPreset) {
+        guard let physical = display.value?.physicalSize else { return }
+        applyDisplay(preset.configuration(fitting: physical))
+    }
+
+    /// Saves a configuration as a named preset, measured in dp so it fits other screens too.
+    func savePreset(named name: String, from configuration: DisplayConfiguration) {
+        let trimmed = name.trimmingCharacters(in: .whitespaces)
+        guard !trimmed.isEmpty else { return }
+        let dp = configuration.sizeDP
+        customScreenPresets.removeAll { $0.name.caseInsensitiveCompare(trimmed) == .orderedSame }
+        customScreenPresets.append(ScreenPreset(name: trimmed, widthDP: dp.width, heightDP: dp.height))
+        storePresets()
+    }
+
+    func deletePreset(_ preset: ScreenPreset) {
+        customScreenPresets.removeAll { $0 == preset }
+        storePresets()
+    }
+
+    static let presetsKey = "settings.screenPresets"
+
+    private static func loadPresets(from store: any KeyValueStore) -> [ScreenPreset] {
+        guard let data = store.string(forKey: presetsKey)?.data(using: .utf8) else { return [] }
+        return (try? JSONDecoder().decode([ScreenPreset].self, from: data)) ?? []
+    }
+
+    private func storePresets() {
+        let data = try? JSONEncoder().encode(customScreenPresets)
+        dependencies.preferences.set(data.map { String(decoding: $0, as: UTF8.self) }, forKey: Self.presetsKey)
+    }
+
     // MARK: - Snapshots
 
     func snapshotNameError(_ name: String) -> String? {
@@ -219,6 +296,13 @@ public final class DeviceSettingsModel {
 
     private func controller() throws -> any DeviceSettingsControlling {
         guard let controller = dependencies.repository.session(for: deviceID) as? any DeviceSettingsControlling else {
+            throw DeviceActionError.notSupported
+        }
+        return controller
+    }
+
+    private func displayController() throws -> any DisplayOverriding {
+        guard let controller = dependencies.repository.inspector(for: deviceID) as? any DisplayOverriding else {
             throw DeviceActionError.notSupported
         }
         return controller

@@ -3,6 +3,28 @@ import Foundation
 
 /// Parsers for the few device commands whose output has a fixed, machine-readable format.
 enum DeviceOutputParsers {
+    /// `wm size` ("Physical size: 1080x2400", then "Override size: …" when set) and `wm density`.
+    static func displayMetrics(size: String, density: String) -> DisplayMetrics? {
+        func value(_ label: String, in text: String) -> String? {
+            text.split(whereSeparator: \.isNewline)
+                .first { $0.hasPrefix(label) }
+                .map { $0.dropFirst(label.count).trimmingCharacters(in: .whitespaces) }
+        }
+        func pixelSize(_ text: String?) -> PixelSize? {
+            let parts = text?.split(separator: "x").compactMap { Int($0) } ?? []
+            return parts.count == 2 ? PixelSize(width: parts[0], height: parts[1]) : nil
+        }
+        guard let physicalSize = pixelSize(value("Physical size:", in: size)),
+            let physicalDensity = value("Physical density:", in: density).flatMap({ Int($0) })
+        else { return nil }
+        return DisplayMetrics(
+            physicalSize: physicalSize,
+            physicalDensity: physicalDensity,
+            overrideSize: pixelSize(value("Override size:", in: size)),
+            overrideDensity: value("Override density:", in: density).flatMap { Int($0) }
+        )
+    }
+
     /// `[ro.product.model]: [Pixel 9]` lines.
     static func properties(_ text: String) -> [String: String] {
         var result: [String: String] = [:]

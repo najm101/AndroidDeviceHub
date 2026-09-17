@@ -143,7 +143,10 @@ final class AppComposition {
     }
 
     func makeSettingsModel(for id: DeviceID) -> DeviceSettingsModel {
-        DeviceSettingsModel(deviceID: id, dependencies: DeviceSettingsDependencies(repository: repository))
+        DeviceSettingsModel(
+            deviceID: id,
+            dependencies: DeviceSettingsDependencies(repository: repository, preferences: preferences)
+        )
     }
 
     func makeDeviceInfoModel(for id: DeviceID) -> DeviceInfoModel {

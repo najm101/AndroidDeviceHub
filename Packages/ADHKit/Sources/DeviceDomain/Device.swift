@@ -68,6 +68,8 @@ public enum Capability: String, CaseIterable, Hashable, Sendable {
     // Emulator settings (sections of Inspector ▸ Settings)
     case location, battery, network, telephony, sensors, posture, fingerprint, display, microphone, clipboard
     case snapshots
+    /// Screen size and density overrides (over ADB).
+    case displaySize
 }
 
 /// Whether a capability can be used right now.

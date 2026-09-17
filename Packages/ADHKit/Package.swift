@@ -136,7 +136,7 @@ package.targets += [
         "EmulatorGRPC",
     ]),
     .testTarget(name: "DeviceListFeatureTests", dependencies: ["ADHTestSupport", "DeviceListFeature", "DeviceDomain", "SDKDomain"]),
-    .testTarget(name: "DeviceSettingsFeatureTests", dependencies: ["ADHTestSupport", "DeviceSettingsFeature", "DeviceDomain"]),
+    .testTarget(name: "DeviceSettingsFeatureTests", dependencies: ["ADHTestSupport", "DeviceSettingsFeature", "DeviceDomain", "Foundations"]),
     .testTarget(name: "InspectorFeaturesTests", dependencies: [
         "ADHTestSupport", "DeviceInfoFeature", "FilesFeature", "ReportsFeature", "DeviceDomain",
     ]),

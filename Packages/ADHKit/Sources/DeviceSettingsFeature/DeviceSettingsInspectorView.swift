@@ -52,6 +52,7 @@ public struct DeviceSettingsInspectorView: View {
         case .posture: PostureSection(model: model)
         case .fingerprint: FingerprintSection(model: model)
         case .display: DisplaySection(model: model)
+        case .screenSize: ScreenSizeSection(model: model)
         case .microphone: MicrophoneSection(model: model)
         case .clipboard: ClipboardSection(model: model)
         case .snapshots: SnapshotsSection(model: model)

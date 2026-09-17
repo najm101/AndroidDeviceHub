@@ -10,6 +10,8 @@ enum EmulatorCapabilities {
 
     /// Inspector tabs that talk to the device over ADB.
     static let adbTabs: [Capability] = [.info, .apps, .profiles, .files, .reports]
+    /// Inspector ▸ Settings sections that talk to the device over ADB.
+    static let adbSettings: [Capability] = [.displaySize]
 
     /// Whether the device can be reached over ADB.
     enum ADBStatus: Hashable {
@@ -73,6 +75,7 @@ enum EmulatorCapabilities {
             result[.shutDown] = .available
             result[.restart] = .available
             setADBTabs(in: &result, adb: adb)
+            setADB(adbSettings, in: &result, adb: adb)
 
         case .running(inAppControl: false):
             setEditing(in: &result, to: .disabled(reason: stopFirst))
@@ -83,10 +86,14 @@ enum EmulatorCapabilities {
     }
 
     private static func setADBTabs(in result: inout [Capability: Availability], adb: ADBStatus) {
+        setADB(adbTabs, in: &result, adb: adb)
+    }
+
+    private static func setADB(_ capabilities: [Capability], in result: inout [Capability: Availability], adb: ADBStatus) {
         switch adb {
-        case .ready: set(adbTabs, in: &result, to: .available)
-        case .connecting: set(adbTabs, in: &result, to: .disabled(reason: InspectorHint.connecting))
-        case .unavailable: set(adbTabs, in: &result, to: .disabled(reason: InspectorHint.installPlatformTools))
+        case .ready: set(capabilities, in: &result, to: .available)
+        case .connecting: set(capabilities, in: &result, to: .disabled(reason: InspectorHint.connecting))
+        case .unavailable: set(capabilities, in: &result, to: .disabled(reason: InspectorHint.installPlatformTools))
         }
     }
 

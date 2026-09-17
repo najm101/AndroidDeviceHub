@@ -2,8 +2,8 @@ import DeviceDomain
 
 /// The sections of Inspector ▸ Settings, in display order.
 enum SettingsSection: String, CaseIterable, Hashable, Identifiable {
-    case location, battery, network, telephony, sensors, posture, fingerprint, display, microphone, clipboard
-    case snapshots
+    case location, battery, network, telephony, sensors, posture, fingerprint, display, screenSize, microphone
+    case clipboard, snapshots
 
     var id: String { rawValue }
 
@@ -18,6 +18,7 @@ enum SettingsSection: String, CaseIterable, Hashable, Identifiable {
         case .posture: .posture
         case .fingerprint: .fingerprint
         case .display: .display
+        case .screenSize: .displaySize
         case .microphone: .microphone
         case .clipboard: .clipboard
         case .snapshots: .snapshots
@@ -34,6 +35,7 @@ enum SettingsSection: String, CaseIterable, Hashable, Identifiable {
         case .posture: "Fold Posture"
         case .fingerprint: "Fingerprint"
         case .display: "Display"
+        case .screenSize: "Screen Size"
         case .microphone: "Microphone"
         case .clipboard: "Clipboard"
         case .snapshots: "Snapshots"
@@ -50,6 +52,7 @@ enum SettingsSection: String, CaseIterable, Hashable, Identifiable {
         case .posture: "rectangle.portrait.split.2x1"
         case .fingerprint: "touchid"
         case .display: "sun.max"
+        case .screenSize: "arrow.up.left.and.arrow.down.right.rectangle"
         case .microphone: "mic"
         case .clipboard: "doc.on.clipboard"
         case .snapshots: "camera.on.rectangle"

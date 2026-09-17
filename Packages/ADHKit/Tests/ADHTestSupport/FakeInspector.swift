@@ -27,6 +27,7 @@ public final class FakeInspector: DeviceInspecting {
     public var reports: [CrashReport] = []
     public var logBatches: [[LogEntry]] = []
     public var error: (any Error)?
+    public var display = DisplayMetrics(physicalSize: PixelSize(width: 1080, height: 2400), physicalDensity: 420)
 
     public private(set) var log: [String] = []
 
@@ -156,5 +157,18 @@ extension LogEntry {
         _ id: Int, level: LogLevel = .info, tag: String = "Tag", message: String = "hello", uid: Int? = 1000
     ) -> LogEntry {
         LogEntry(id: id, date: .now, pid: 100, tid: 101, uid: uid, level: level, tag: tag, message: message)
+    }
+}
+
+extension FakeInspector: DisplayOverriding {
+    public func displayMetrics() async throws -> DisplayMetrics {
+        try record("wm")
+        return display
+    }
+
+    public func setDisplayOverride(_ configuration: DisplayConfiguration?) async throws {
+        try record("wm \(configuration.map { "\($0.size.width)x\($0.size.height)@\($0.density)" } ?? "reset")")
+        display.overrideSize = configuration?.size
+        display.overrideDensity = configuration?.density
     }
 }

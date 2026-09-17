@@ -1,6 +1,7 @@
 import ADHTestSupport
 import DeviceDomain
 import Foundation
+import Foundations
 import Testing
 
 @testable import DeviceSettingsFeature
@@ -32,6 +33,43 @@ struct DeviceSettingsModelTests {
     /// Lets the tasks the model starts run to completion.
     func settle() async {
         for _ in 0..<50 { await Task.yield() }
+    }
+
+    @Test func appliesPresetsAndResetsTheScreen() async throws {
+        let inspector = FakeInspector()
+        repository.inspectors[id] = inspector
+        await model.display.load()
+
+        model.applyPreset(ScreenPreset(name: "Tablet", widthDP: 800, heightDP: 1280))
+        await settle()
+        #expect(inspector.log.last == "wm 1080x1728@216")
+        #expect(model.display.value?.current.sizeDP == PixelSize(width: 800, height: 1280))
+
+        model.applyDisplay(try #require(model.display.value).physical)
+        await settle()
+        #expect(inspector.log.last == "wm reset")
+        #expect(model.display.value?.isOverridden == false)
+
+        model.applyDisplay(DisplayConfiguration(size: PixelSize(width: 10, height: 10), density: 420))
+        #expect(model.errors[.screenSize] != nil)
+    }
+
+    @Test func savesPresetsInDP() {
+        let preferences = InMemoryKeyValueStore()
+        let model = DeviceSettingsModel(
+            deviceID: id, dependencies: DeviceSettingsDependencies(repository: repository, preferences: preferences)
+        )
+        let configuration = DisplayConfiguration(size: PixelSize(width: 1600, height: 2560), density: 320)
+        model.savePreset(named: " Kiosk ", from: configuration)
+        model.savePreset(named: "kiosk", from: configuration)
+        #expect(model.customScreenPresets == [ScreenPreset(name: "kiosk", widthDP: 800, heightDP: 1280)])
+
+        let reloaded = DeviceSettingsModel(
+            deviceID: id, dependencies: DeviceSettingsDependencies(repository: repository, preferences: preferences)
+        )
+        #expect(reloaded.customScreenPresets == model.customScreenPresets)
+        reloaded.deletePreset(reloaded.customScreenPresets[0])
+        #expect(reloaded.customScreenPresets.isEmpty)
     }
 
     @Test func showsOnlySectionsTheDeviceSupports() {
